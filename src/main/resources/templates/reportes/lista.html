@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar { width: 260px; min-height: 100vh; background: #1a1a2e; position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .card-reporte { background: #fff; border-radius: 16px; padding: 28px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #7b1fa2; box-shadow: 0 0 0 3px rgba(123,31,162,0.15); }
+        .btn-generar { font-weight: 700; border: none; border-radius: 10px; padding: 11px 24px; transition: all 0.2s; cursor: pointer; }
+        .btn-ocupacion { background: #4caf50; color: #fff; }
+        .btn-ocupacion:hover { background: #388e3c; }
+        .btn-facturacion { background: #7b1fa2; color: #fff; }
+        .btn-facturacion:hover { background: #6a1b9a; }
+        .btn-pdf { background: #f5c518; color: #1a1a2e; }
+        .btn-pdf:hover { background: #e0b015; }
+        .resultado-card { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e0e0e0; }
+        .stat-item { background: #fff; border-radius: 10px; padding: 16px; border: 1px solid #f0f0f0; text-align: center; }
+        .stat-number { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; }
+        .stat-label { font-size: 0.8rem; color: #888; margin-top: 4px; }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; border-bottom: 2px solid #f0f0f0; padding: 10px 14px; }
+        .table td { font-size: 0.9rem; vertical-align: middle; padding: 10px 14px; }
+        .tab-btn { padding: 10px 24px; border: 2px solid #e0e0e0; border-radius: 10px; background: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; }
+        .tab-btn.active { border-color: #7b1fa2; color: #7b1fa2; background: #f3e5f5; }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small id="labelRol">Panel</small>
+    </div>
+    <div style="padding: 16px 0;" id="sidebarMenu"></div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-bar-chart me-2" style="color:#7b1fa2;"></i>Reportes
+        </div>
+        <div style="font-size:0.85rem;color:#888;">Solo lectura</div>
+    </div>
+ 
+    <div class="p-4">
+ 
+        <!-- Tabs -->
+        <div class="d-flex gap-2 mb-4">
+            <button class="tab-btn active" id="tabOcupacion"
+                    onclick="cambiarTab('ocupacion')">
+                <i class="bi bi-graph-up me-2"></i>Ocupación de flota
+            </button>
+            <button class="tab-btn" id="tabFacturacion"
+                    onclick="cambiarTab('facturacion')">
+                <i class="bi bi-currency-dollar me-2"></i>Facturación mensual
+            </button>
+        </div>
+ 
+        <!-- REPORTE OCUPACIÓN -->
+        <div id="seccionOcupacion">
+            <div class="card-reporte mb-4">
+                <h6 class="fw-700 mb-4" style="color:#1a1a2e;">
+                    <i class="bi bi-graph-up me-2" style="color:#4caf50;"></i>
+                    Reporte de Ocupación de Flota
+                </h6>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha de inicio</label>
+                        <input type="date" id="ocFechaInicio" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha de fin</label>
+                        <input type="date" id="ocFechaFin" class="form-control">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn-generar btn-ocupacion flex-grow-1"
+                                onclick="generarOcupacion()">
+                            <i class="bi bi-search me-1"></i>Generar
+                        </button>
+                        <button class="btn-generar btn-pdf"
+                                onclick="exportarOcupacionPdf()"
+                                id="btnPdfOcupacion" style="display:none;">
+                            <i class="bi bi-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            <div id="resultadoOcupacion" style="display:none;">
+                <div class="row g-3 mb-4" id="statsOcupacion"></div>
+                <div class="card-reporte">
+                    <h6 class="fw-700 mb-3" style="color:#1a1a2e;">Detalle por vehículo</h6>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Vehículo</th>
+                                    <th>Días alquilado</th>
+                                    <th>% Ocupación</th>
+                                    <th>Indicador</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaOcupacion"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- REPORTE FACTURACIÓN -->
+        <div id="seccionFacturacion" style="display:none;">
+            <div class="card-reporte mb-4">
+                <h6 class="fw-700 mb-4" style="color:#1a1a2e;">
+                    <i class="bi bi-currency-dollar me-2" style="color:#7b1fa2;"></i>
+                    Reporte de Facturación Mensual
+                </h6>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label">Mes</label>
+                        <select id="facMes" class="form-select">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Año</label>
+                        <select id="facAnio" class="form-select">
+                            <option value="2026">2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button class="btn-generar btn-facturacion flex-grow-1"
+                                onclick="generarFacturacion()">
+                            <i class="bi bi-search me-1"></i>Generar
+                        </button>
+                        <button class="btn-generar btn-pdf"
+                                onclick="exportarFacturacionPdf()"
+                                id="btnPdfFacturacion" style="display:none;">
+                            <i class="bi bi-file-pdf me-1"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+ 
+            <div id="resultadoFacturacion" style="display:none;">
+                <div class="row g-3" id="statsFacturacion"></div>
+            </div>
+        </div>
+ 
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let rolActual = '';
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        rolActual = payload.rol || '';
+        if (!['ADMINISTRADOR','AUDITOR'].includes(rolActual)) {
+            window.location.href = '/dashboard/' + rolActual.toLowerCase();
+        }
+    } catch (e) { window.location.href = '/login'; }
+ 
+    function construirSidebar() {
+        const labelRol = document.getElementById('labelRol');
+        let menu = '';
+        if (rolActual === 'ADMINISTRADOR') {
+            labelRol.textContent = 'Panel Administrador';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/admin" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Gestión</div>
+                <a href="/usuarios/lista" class="menu-item"><i class="bi bi-people"></i> Usuarios</a>
+                <a href="/vehiculos/lista" class="menu-item"><i class="bi bi-car-front"></i> Vehículos</a>
+                <a href="/reservas/lista" class="menu-item"><i class="bi bi-calendar-check"></i> Reservas</a>
+                <a href="/pagos/lista" class="menu-item"><i class="bi bi-credit-card"></i> Pagos</a>
+                <a href="/mantenimientos/lista" class="menu-item"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <div class="menu-label">Reportes</div>
+                <a href="/reportes/lista" class="menu-item active"><i class="bi bi-bar-chart"></i> Reportes</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+        } else {
+            labelRol.textContent = 'Panel Auditor';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/auditor" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Reportes</div>
+                <a href="/reportes/lista" class="menu-item active"><i class="bi bi-bar-chart"></i> Reportes</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+        }
+        document.getElementById('sidebarMenu').innerHTML = menu;
+    }
+ 
+    function cambiarTab(tab) {
+        document.getElementById('seccionOcupacion').style.display =
+            tab === 'ocupacion' ? 'block' : 'none';
+        document.getElementById('seccionFacturacion').style.display =
+            tab === 'facturacion' ? 'block' : 'none';
+        document.getElementById('tabOcupacion').className =
+            'tab-btn' + (tab === 'ocupacion' ? ' active' : '');
+        document.getElementById('tabFacturacion').className =
+            'tab-btn' + (tab === 'facturacion' ? ' active' : '');
+    }
+ 
+    async function generarOcupacion() {
+        const fi = document.getElementById('ocFechaInicio').value;
+        const ff = document.getElementById('ocFechaFin').value;
+        if (!fi || !ff) { alert('Selecciona las fechas del período.'); return; }
+ 
+        try {
+            const res = await fetch(
+                `/api/reportes/ocupacion?fechaInicio=${fi}&fechaFin=${ff}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) { alert('Error al generar el reporte.'); return; }
+            const datos = await res.json();
+ 
+            document.getElementById('resultadoOcupacion').style.display = 'block';
+            document.getElementById('btnPdfOcupacion').style.display = 'inline-block';
+ 
+            document.getElementById('statsOcupacion').innerHTML = `
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.totalVehiculos}</div>
+                        <div class="stat-label">Vehículos activos</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.totalReservas}</div>
+                        <div class="stat-label">Reservas en el período</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.detalle.length}</div>
+                        <div class="stat-label">Vehículos con actividad</div>
+                    </div>
+                </div>`;
+ 
+            const tbody = document.getElementById('tablaOcupacion');
+            if (datos.detalle.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">
+                    No hay reservas en el período seleccionado</td></tr>`;
+            } else {
+                tbody.innerHTML = datos.detalle.map(d => {
+                    const pct = d.porcentajeOcupacion;
+                    const color = pct >= 70 ? '#4caf50' : pct >= 40 ? '#ff9800' : '#f44336';
+                    return `
+                    <tr>
+                        <td><strong>${d.vehiculo}</strong></td>
+                        <td>${d.diasAlquilado} días</td>
+                        <td><strong style="color:${color};">${pct}%</strong></td>
+                        <td>
+                            <div style="background:#f0f0f0;border-radius:20px;height:8px;width:120px;">
+                                <div style="background:${color};border-radius:20px;height:8px;
+                                    width:${Math.min(pct,100)}%;"></div>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function generarFacturacion() {
+        const mes  = document.getElementById('facMes').value;
+        const anio = document.getElementById('facAnio').value;
+ 
+        try {
+            const res = await fetch(
+                `/api/reportes/facturacion?mes=${mes}&anio=${anio}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) { alert('Error al generar el reporte.'); return; }
+            const datos = await res.json();
+ 
+            document.getElementById('resultadoFacturacion').style.display = 'block';
+            document.getElementById('btnPdfFacturacion').style.display = 'inline-block';
+ 
+            document.getElementById('statsFacturacion').innerHTML = `
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number" style="color:#4caf50;">
+                            $${(datos.totalIngresos || 0).toLocaleString('es-CO')}
+                        </div>
+                        <div class="stat-label">Total ingresos COP</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.totalPagos}</div>
+                        <div class="stat-label">Pagos registrados</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <div class="stat-number" style="font-size:1rem;">🏆</div>
+                        <div class="stat-label">Más rentable</div>
+                        <div style="font-size:0.82rem;color:#1a1a2e;font-weight:600;margin-top:4px;">
+                            ${datos.vehiculoMasRentable}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mt-2">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.pagosEfectivo}</div>
+                        <div class="stat-label">💵 Pagos en efectivo</div>
+                    </div>
+                </div>
+                <div class="col-md-6 mt-2">
+                    <div class="stat-item">
+                        <div class="stat-number">${datos.pagosTransferencia}</div>
+                        <div class="stat-label">🏦 Pagos por transferencia</div>
+                    </div>
+                </div>`;
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function exportarOcupacionPdf() {
+        const fi = document.getElementById('ocFechaInicio').value;
+        const ff = document.getElementById('ocFechaFin').value;
+        try {
+            const res = await fetch(
+                `/api/reportes/ocupacion/pdf?fechaInicio=${fi}&fechaFin=${ff}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'reporte-ocupacion.pdf';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (e) { alert('Error al exportar PDF'); }
+    }
+ 
+    async function exportarFacturacionPdf() {
+        const mes  = document.getElementById('facMes').value;
+        const anio = document.getElementById('facAnio').value;
+        try {
+            const res = await fetch(
+                `/api/reportes/facturacion/pdf?mes=${mes}&anio=${anio}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'reporte-facturacion.pdf';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+        } catch (e) { alert('Error al exportar PDF'); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+        construirSidebar();
+        // Fechas por defecto: mes actual
+        const hoy = new Date();
+        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+            .toISOString().split('T')[0];
+        document.getElementById('ocFechaInicio').value = inicioMes;
+        document.getElementById('ocFechaFin').value = hoy.toISOString().split('T')[0];
+        // Mes actual en facturación
+        document.getElementById('facMes').value = hoy.getMonth() + 1;
+        document.getElementById('facAnio').value = hoy.getFullYear();
+    });
+</script>
+</body>
+</html>

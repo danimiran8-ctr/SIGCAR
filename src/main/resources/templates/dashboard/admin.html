@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar {
+            width: 260px; min-height: 100vh;
+            background: #1a1a2e; position: fixed;
+            top: 0; left: 0; z-index: 100;
+            padding: 0; overflow-y: auto;
+        }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .sidebar-menu { padding: 16px 0; }
+        .menu-label {
+            padding: 8px 20px; font-size: 0.7rem; font-weight: 700;
+            color: #555; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 20px; color: #aaa;
+            text-decoration: none; font-size: 0.9rem;
+            transition: all 0.2s; border-left: 3px solid transparent;
+        }
+        .menu-item:hover, .menu-item.active {
+            background: rgba(245,197,24,0.08);
+            color: #f5c518; border-left-color: #f5c518;
+        }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; min-height: 100vh; }
+        .topbar {
+            background: #fff; padding: 14px 28px;
+            display: flex; align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: sticky; top: 0; z-index: 99;
+        }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar {
+            width: 38px; height: 38px; background: #f5c518;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: #1a1a2e; font-size: 0.95rem;
+        }
+        .kpi-card {
+            background: #fff; border-radius: 16px; padding: 22px;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .kpi-icon {
+            width: 50px; height: 50px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-bottom: 14px;
+        }
+        .kpi-number { font-size: 1.9rem; font-weight: 800; color: #1a1a2e; }
+        .kpi-label { color: #888; font-size: 0.85rem; margin-top: 2px; }
+        .kpi-change { font-size: 0.78rem; font-weight: 600; margin-top: 6px; }
+        .card-table {
+            background: #fff; border-radius: 16px; padding: 22px;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .table th {
+            font-size: 0.78rem; font-weight: 700; color: #888;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .table td { font-size: 0.9rem; vertical-align: middle; }
+        .badge-rol { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small>Panel Administrador</small>
+    </div>
+    <div class="sidebar-menu">
+        <div class="menu-label">Principal</div>
+        <a href="/dashboard/admin" class="menu-item active">
+            <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+        <div class="menu-label">Gestión</div>
+        <a href="/usuarios/lista" class="menu-item">
+            <i class="bi bi-people"></i> Usuarios
+        </a>
+        <a href="/vehiculos/lista" class="menu-item">
+            <i class="bi bi-car-front"></i> Vehículos
+        </a>
+		<a href="/reservas/lista" class="menu-item">
+		    <i class="bi bi-calendar-check"></i> Reservas
+		</a>
+		<a href="/pagos/lista" class="menu-item">
+		    <i class="bi bi-credit-card"></i> Pagos
+		</a>
+		<a href="/mantenimientos/lista" class="menu-item">
+		    <i class="bi bi-tools"></i> Mantenimientos
+		</a>
+        <div class="menu-label">Reportes</div>
+		<a href="/reportes/lista" class="menu-item">
+		    <i class="bi bi-bar-chart"></i> Reportes
+		</a>
+        <div class="menu-label">Cuenta</div>
+        <a href="/logout" class="menu-item">
+            <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+        </a>
+    </div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+ 
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-grid-1x2 me-2" style="color:#f5c518;"></i>Dashboard
+        </div>
+        <div class="user-info">
+            <div>
+                <div style="font-size:0.88rem;font-weight:600;color:#1a1a2e;">Administrador</div>
+                <div style="font-size:0.75rem;color:#888;">RentCar Express</div>
+            </div>
+            <div class="user-avatar">A</div>
+        </div>
+    </div>
+ 
+    <!-- CONTENIDO -->
+    <div class="p-4">
+ 
+        <!-- KPIs -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff8e1;">
+                        <i class="bi bi-calendar-check" style="color:#f5c518;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiReservas">
+                        <div class="spinner-border spinner-border-sm text-warning"></div>
+                    </div>
+                    <div class="kpi-label">Reservas activas</div>
+                    <div class="kpi-change" id="kpiReservasDetalle" style="font-size:0.78rem;color:#888;"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;">
+                        <i class="bi bi-currency-dollar" style="color:#4caf50;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiIngresos">
+                        <div class="spinner-border spinner-border-sm text-success"></div>
+                    </div>
+                    <div class="kpi-label">Ingresos del mes</div>
+                    <div class="kpi-change" id="kpiIngresosDetalle" style="font-size:0.78rem;color:#888;"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e3f2fd;">
+                        <i class="bi bi-car-front" style="color:#2196f3;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiVehiculos">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                    <div class="kpi-label">Vehículos disponibles</div>
+                    <div class="kpi-change text-primary" id="kpiVehiculosChange">
+                        <i class="bi bi-arrow-up"></i> Cargando...
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;">
+                        <i class="bi bi-tools" style="color:#ff9800;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiMantenimientos">
+                        <div class="spinner-border spinner-border-sm text-warning"></div>
+                    </div>
+                    <div class="kpi-label">Alertas de mantenimiento</div>
+                    <div class="kpi-change text-warning" id="kpiMantenimientosChange">
+                        <i class="bi bi-clock"></i> Cargando...
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- TABLAS -->
+        <div class="row g-3">
+            <!-- Usuarios recientes -->
+            <div class="col-lg-6">
+                <div class="card-table">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-700 mb-0" style="color:#1a1a2e;">
+                            <i class="bi bi-people me-2" style="color:#f5c518;"></i>Usuarios del sistema
+                        </h6>
+                        <a href="/usuarios/lista" class="btn btn-sm btn-warning fw-600">
+                            Ver todos <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaUsuarios">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                        Cargando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+ 
+            <!-- Vehículos recientes -->
+            <div class="col-lg-6">
+                <div class="card-table">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-700 mb-0" style="color:#1a1a2e;">
+                            <i class="bi bi-car-front me-2" style="color:#f5c518;"></i>Flota de vehículos
+                        </h6>
+                        <a href="/vehiculos/lista" class="btn btn-sm btn-warning fw-600">
+                            Ver todos <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Placa</th>
+                                    <th>Vehículo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaVehiculos">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-4">
+                                        <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                        Cargando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    // ── Cargar KPI vehículos disponibles ──
+    async function cargarKpiIngresos() {
+        try {
+            const res = await fetch('/api/pagos/ingresos/mes', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const ingresos = data.ingresos || 0;
+            document.getElementById('kpiIngresos').textContent =
+                '$' + ingresos.toLocaleString('es-CO');
+            document.getElementById('kpiIngresosDetalle').innerHTML =
+                `<i class="bi bi-graph-up me-1" style="color:#4caf50;"></i>Mes actual`;
+        } catch (e) {
+            document.getElementById('kpiIngresos').textContent = '—';
+        }
+    }
+ 
+    async function cargarKpiVehiculos() {
+        try {
+            const res = await fetch('/api/vehiculos/disponibles', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const vehiculos = await res.json();
+                document.getElementById('kpiVehiculos').textContent = vehiculos.length;
+                document.getElementById('kpiVehiculosChange').innerHTML =
+                    `<i class="bi bi-check-circle-fill"></i> ${vehiculos.length} vehículo(s) listos`;
+            }
+        } catch (e) {
+            document.getElementById('kpiVehiculos').textContent = '—';
+        }
+    }
+ 
+    // ── Cargar KPI alertas mantenimiento ──
+    async function cargarKpiMantenimientos() {
+        try {
+            const res = await fetch('/api/vehiculos/alertas', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const alertas = await res.json();
+                document.getElementById('kpiMantenimientos').textContent = alertas.length;
+                const change = document.getElementById('kpiMantenimientosChange');
+                if (alertas.length > 0) {
+                    change.innerHTML =
+                        `<i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                         ${alertas.length} requieren atención`;
+                    change.className = 'kpi-change text-warning';
+                } else {
+                    change.innerHTML = `<i class="bi bi-check-circle-fill"></i> Todo al día`;
+                    change.className = 'kpi-change text-success';
+                }
+            }
+        } catch (e) {
+            document.getElementById('kpiMantenimientos').textContent = '—';
+        }
+    }
+ 
+    // ── Cargar tabla de usuarios ──
+    async function cargarUsuarios() {
+        try {
+            const res = await fetch('/api/usuarios', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.status === 403 || res.status === 401) {
+                window.location.href = '/login'; return;
+            }
+            const usuarios = await res.json();
+            const tbody = document.getElementById('tablaUsuarios');
+ 
+            if (usuarios.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">
+                    No hay usuarios registrados</td></tr>`;
+                return;
+            }
+ 
+            tbody.innerHTML = usuarios.slice(0, 5).map(u => `
+                <tr>
+                    <td>
+                        <strong>${u.nombres} ${u.apellidos}</strong>
+                        <small class="d-block text-muted">${u.correo}</small>
+                    </td>
+                    <td>
+                        <span class="badge-rol" style="background:#fff8e1;color:#f5c518;">
+                            ${u.rol}
+                        </span>
+                    </td>
+                    <td>${u.estado
+                        ? '<span class="badge bg-success">Activo</span>'
+                        : '<span class="badge bg-danger">Inactivo</span>'}</td>
+                </tr>
+            `).join('');
+ 
+            // KPI total usuarios — reservas se cargan por separado
+        } catch (e) {
+            console.error(e);
+        }
+    }
+ 
+    // ── Cargar KPI Reservas ──
+    async function cargarKpiReservas() {
+        try {
+            const res = await fetch('/api/reservas', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) return;
+            const reservas = await res.json();
+            const activas = reservas.filter(r =>
+                ['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'].includes(r.estado));
+            const pendientes = reservas.filter(r => r.estado === 'PENDIENTE').length;
+            const enCurso = reservas.filter(r => r.estado === 'EN_CURSO').length;
+            document.getElementById('kpiReservas').textContent = activas.length;
+            document.getElementById('kpiReservasDetalle').innerHTML =
+                `<i class="bi bi-hourglass-split me-1" style="color:#f59e0b;"></i>${pendientes} pendiente(s) · ${enCurso} en curso`;
+        } catch (e) {
+            document.getElementById('kpiReservas').textContent = '—';
+        }
+    }
+ 
+    // ── Cargar tabla de vehículos ──
+    async function cargarVehiculos() {
+        try {
+            const res = await fetch('/api/vehiculos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) return;
+            const vehiculos = await res.json();
+            const tbody = document.getElementById('tablaVehiculos');
+ 
+            if (vehiculos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3">
+                    No hay vehículos registrados</td></tr>`;
+                return;
+            }
+ 
+            const colores = {
+                'DISPONIBLE':       { bg: '#e8f5e9', color: '#2e7d32' },
+                'ALQUILADO':        { bg: '#ffebee', color: '#c62828' },
+                'EN_MANTENIMIENTO': { bg: '#fff3e0', color: '#e65100' },
+            };
+ 
+            tbody.innerHTML = vehiculos.slice(0, 5).map(v => {
+                const est = colores[v.estado] || { bg: '#f0f0f0', color: '#666' };
+                return `
+                <tr>
+                    <td><strong style="font-family:monospace;">${v.placa}</strong></td>
+                    <td>
+                        ${v.marca} ${v.modelo}
+                        <small class="d-block text-muted">${v.categoria}</small>
+                    </td>
+                    <td>
+                        <span style="background:${est.bg};color:${est.color};
+                            padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">
+                            ${v.estado}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+ 
+    // Cargar todo al iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarKpiReservas();
+        cargarKpiIngresos();
+        cargarKpiVehiculos();
+        cargarKpiMantenimientos();
+        cargarUsuarios();
+        cargarVehiculos();
+    });
+</script>
+</body>
+</html>s

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Reserva — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; }
+        .topbar { background: #1a1a2e; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar .logo { font-size: 1.2rem; font-weight: 800; color: #fff; text-decoration: none; }
+        .topbar .logo span { color: #f5c518; }
+        .form-card { background: #fff; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); max-width: 700px; margin: 40px auto; }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 11px 16px; }
+        .form-control:focus, .form-select:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); }
+        .btn-reservar { background: #f5c518; color: #1a1a2e; font-weight: 700; border: none; border-radius: 10px; padding: 13px 28px; font-size: 1rem; transition: all 0.2s; }
+        .btn-reservar:hover { background: #e0b015; }
+        .vehicle-card-mini { background: #f8f9fa; border-radius: 12px; padding: 16px; border: 1px solid #e0e0e0; }
+        .precio-total { background: #fff8e1; border: 2px solid #f5c518; border-radius: 12px; padding: 16px; text-align: center; }
+        .precio-total .monto { font-size: 2rem; font-weight: 800; color: #1a1a2e; }
+    </style>
+</head>
+<body>
+ 
+<!-- TOPBAR -->
+<div class="topbar">
+    <a href="/" class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></a>
+    <div class="d-flex gap-2 align-items-center">
+        <span id="nombreCliente" style="color:#aaa;font-size:0.88rem;"></span>
+        <a href="/logout" class="btn btn-sm btn-outline-warning fw-600">
+            <i class="bi bi-box-arrow-left me-1"></i>Salir
+        </a>
+    </div>
+</div>
+ 
+<div class="container">
+    <div class="form-card">
+        <h5 class="fw-700 mb-1" style="color:#1a1a2e;">
+            <i class="bi bi-calendar-plus me-2" style="color:#f5c518;"></i>Solicitar Reserva
+        </h5>
+        <p class="text-muted mb-4" style="font-size:0.88rem;">
+            Selecciona el vehículo y las fechas. Un agente confirmará tu solicitud.
+        </p>
+ 
+        <div id="mensajeResultado" style="display:none;" class="mb-4"></div>
+ 
+        <div class="row g-3">
+            <!-- Selector de vehículo -->
+            <div class="col-12">
+                <label class="form-label">Vehículo <span class="text-danger">*</span></label>
+                <select id="idVehiculo" class="form-select" onchange="actualizarVehiculo()">
+                    <option value="">Seleccionar vehículo disponible...</option>
+                </select>
+            </div>
+ 
+            <!-- Info del vehículo seleccionado -->
+            <div class="col-12" id="infoVehiculo" style="display:none;">
+                <div class="vehicle-card-mini">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <img id="fotoVehiculo" src="" style="width:80px;height:55px;object-fit:cover;border-radius:8px;"
+                                 onerror="this.style.display='none'">
+                        </div>
+                        <div class="col">
+                            <div class="fw-700" id="nombreVehiculo"></div>
+                            <small class="text-muted" id="detalleVehiculo"></small>
+                        </div>
+                        <div class="col-auto text-end">
+                            <div class="fw-800" style="color:#f5c518;font-size:1.1rem;" id="precioVehiculo"></div>
+                            <small class="text-muted">COP/día</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+ 
+            <!-- Fechas -->
+            <div class="col-md-6">
+                <label class="form-label">Fecha de inicio <span class="text-danger">*</span></label>
+                <input type="date" id="fechaInicio" class="form-control" onchange="calcularTotal()">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Fecha de fin <span class="text-danger">*</span></label>
+                <input type="date" id="fechaFin" class="form-control" onchange="calcularTotal()">
+            </div>
+ 
+            <!-- Cálculo automático -->
+            <div class="col-12" id="resumenPrecio" style="display:none;">
+                <div class="precio-total">
+                    <div class="text-muted mb-1" style="font-size:0.88rem;">
+                        <span id="diasResumen"></span> días × <span id="precioResumen"></span> COP/día
+                    </div>
+                    <div class="monto" id="totalResumen"></div>
+                    <div class="text-muted" style="font-size:0.8rem;">Valor total estimado (COP)</div>
+                </div>
+            </div>
+ 
+            <!-- Observaciones -->
+            <div class="col-12">
+                <label class="form-label">Observaciones</label>
+                <textarea id="observaciones" class="form-control" rows="2"
+                          placeholder="Alguna observación especial para tu reserva..."></textarea>
+            </div>
+ 
+            <!-- Botones -->
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button class="btn-reservar" onclick="solicitarReserva()">
+                    <i class="bi bi-calendar-check me-2"></i>Enviar Solicitud
+                </button>
+                <a href="/dashboard/cliente" class="btn btn-light border fw-600 px-4">
+                    Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let vehiculosDisponibles = [];
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    // Verificar que sea cliente
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.rol !== 'CLIENTE') {
+            window.location.href = '/dashboard/' + payload.rol.toLowerCase();
+        }
+        document.getElementById('nombreCliente').textContent = payload.sub || '';
+    } catch (e) {
+        window.location.href = '/login';
+    }
+ 
+    // Fechas mínimas
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaInicio').min = hoy;
+    document.getElementById('fechaFin').min = hoy;
+ 
+    async function cargarDatos() {
+        const resV = await fetch('/api/vehiculos/disponibles');
+        if (resV.ok) {
+            vehiculosDisponibles = await resV.json();
+            const select = document.getElementById('idVehiculo');
+            vehiculosDisponibles.forEach(v => {
+                select.innerHTML += `
+                    <option value="${v.id}">
+                        ${v.placa} — ${v.marca} ${v.modelo} (${v.categoria})
+                        — $${v.precioPorDia.toLocaleString('es-CO')}/día
+                    </option>`;
+            });
+ 
+            // Si viene un vehiculo en la URL, preseleccionarlo
+            const params = new URLSearchParams(window.location.search);
+            const vehiculoId = params.get('vehiculo');
+            if (vehiculoId) {
+                document.getElementById('idVehiculo').value = vehiculoId;
+                actualizarVehiculo();
+            }
+        }
+    }
+ 
+    function actualizarVehiculo() {
+        const id = document.getElementById('idVehiculo').value;
+        const v = vehiculosDisponibles.find(v => v.id === id);
+ 
+        if (v) {
+            document.getElementById('infoVehiculo').style.display = 'block';
+            document.getElementById('nombreVehiculo').textContent = v.marca + ' ' + v.modelo;
+            document.getElementById('detalleVehiculo').textContent =
+                v.categoria + ' · ' + (v.transmision || '') + ' · ' + (v.numPuertas || 4) + ' puertas';
+            document.getElementById('precioVehiculo').textContent =
+                '$' + v.precioPorDia.toLocaleString('es-CO');
+            if (v.fotoUrl) {
+                document.getElementById('fotoVehiculo').src = v.fotoUrl;
+                document.getElementById('fotoVehiculo').style.display = 'block';
+            }
+            calcularTotal();
+        } else {
+            document.getElementById('infoVehiculo').style.display = 'none';
+            document.getElementById('resumenPrecio').style.display = 'none';
+        }
+    }
+ 
+    function calcularTotal() {
+        const fi = document.getElementById('fechaInicio').value;
+        const ff = document.getElementById('fechaFin').value;
+        const id = document.getElementById('idVehiculo').value;
+ 
+        if (fi && ff && id) {
+            const dias = Math.round((new Date(ff) - new Date(fi)) / (1000 * 60 * 60 * 24));
+            const v = vehiculosDisponibles.find(v => v.id === id);
+ 
+            if (dias > 0 && v) {
+                const total = dias * v.precioPorDia;
+                document.getElementById('resumenPrecio').style.display = 'block';
+                document.getElementById('diasResumen').textContent = dias;
+                document.getElementById('precioResumen').textContent = v.precioPorDia.toLocaleString('es-CO');
+                document.getElementById('totalResumen').textContent = '$' + total.toLocaleString('es-CO');
+            } else {
+                document.getElementById('resumenPrecio').style.display = 'none';
+            }
+        }
+    }
+ 
+    async function solicitarReserva() {
+        const idVehiculo   = document.getElementById('idVehiculo').value;
+        const fechaInicio  = document.getElementById('fechaInicio').value;
+        const fechaFin     = document.getElementById('fechaFin').value;
+        const observaciones = document.getElementById('observaciones').value;
+        const msg = document.getElementById('mensajeResultado');
+ 
+        if (!idVehiculo || !fechaInicio || !fechaFin) {
+            msg.style.display = 'block';
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Por favor selecciona el vehículo y las fechas.';
+            return;
+        }
+ 
+        try {
+            // Obtener perfil del cliente logueado para obtener su id
+            const resPerfil = await fetch('/api/auth/perfil', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+ 
+            if (!resPerfil.ok) {
+                msg.style.display = 'block';
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ No se pudo identificar tu cuenta. Intenta cerrar sesión y volver a ingresar.';
+                return;
+            }
+ 
+            const cliente = await resPerfil.json();
+ 
+            // Verificar que el id del cliente llegó correctamente
+            if (!cliente || !cliente.id) {
+                msg.style.display = 'block';
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ Error al obtener tu información de usuario. Contacta al soporte.';
+                return;
+            }
+ 
+            const datos = {
+                idCliente:    cliente.id,
+                idVehiculo:   idVehiculo,
+                fechaInicio:  fechaInicio,
+                fechaFin:     fechaFin,
+                observaciones: observaciones
+            };
+ 
+            const res = await fetch('/api/reservas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(datos)
+            });
+ 
+            msg.style.display = 'block';
+ 
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = `✅ ¡Solicitud enviada! Tu reserva está en estado
+                    <strong>PENDIENTE</strong>. Un agente la confirmará pronto.
+                    Redirigiendo...`;
+                setTimeout(() => window.location.href = '/reservas/lista', 3000);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + (error || 'Error al crear la reserva. Intenta de nuevo.');
+            }
+        } catch (e) {
+            msg.style.display = 'block';
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión. Intenta de nuevo.';
+        }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', cargarDatos);
+</script>
+</body>
+</html>

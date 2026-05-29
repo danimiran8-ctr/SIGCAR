@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Mantenimientos — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar { width: 260px; min-height: 100vh; background: #1a1a2e; position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .card-table { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; padding: 12px 16px; }
+        .table td { font-size: 0.9rem; vertical-align: middle; padding: 12px 16px; }
+        .btn-nuevo { background: #ff9800; color: #fff; font-weight: 700; border: none; border-radius: 10px; padding: 10px 20px; transition: all 0.2s; cursor: pointer; }
+        .btn-nuevo:hover { background: #e65100; }
+        .form-select-sm { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 9px 14px; font-size: 0.88rem; }
+        .modal-header { background: #1a1a2e; color: #fff; border-radius: 12px 12px 0 0; }
+        .modal-header .btn-close { filter: invert(1); }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #ff9800; box-shadow: 0 0 0 3px rgba(255,152,0,0.15); }
+        .alerta-badge { background: #fff3e0; color: #e65100; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small id="labelRol">Panel</small>
+    </div>
+    <div style="padding: 16px 0;" id="sidebarMenu"></div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-tools me-2" style="color:#ff9800;"></i>Gestión de Mantenimientos
+        </div>
+        <div style="font-size:0.85rem;color:#888;" id="subtituloVista"></div>
+    </div>
+ 
+    <div class="p-4">
+ 
+        <!-- Alertas activas -->
+        <div id="seccionAlertas" class="mb-4" style="display:none;">
+            <div class="card-table" style="border-left: 4px solid #ff9800;">
+                <h6 class="fw-700 mb-3" style="color:#e65100;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Vehículos con alertas de mantenimiento
+                </h6>
+                <div id="listaAlertas"></div>
+            </div>
+        </div>
+ 
+        <!-- Tabla mantenimientos -->
+        <div class="card-table">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <select class="form-select-sm" id="filtroTipo" onchange="filtrar()">
+                        <option value="">Todos los tipos</option>
+                        <option value="PREVENTIVO">Preventivo</option>
+                        <option value="CORRECTIVO">Correctivo</option>
+                    </select>
+                </div>
+                <button class="btn-nuevo" id="btnNuevo" onclick="abrirModal()" style="display:none;">
+                    <i class="bi bi-plus-lg me-2"></i>Registrar Mantenimiento
+                </button>
+            </div>
+ 
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Vehículo</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Técnico</th>
+                            <th>Costo</th>
+                            <th>Próximo km</th>
+                            <th>Próxima fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                Cargando mantenimientos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted" id="totalRegistros"></small>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL REGISTRAR MANTENIMIENTO -->
+<div class="modal fade" id="modalMantenimiento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;border:none;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-700">
+                    <i class="bi bi-tools me-2"></i>Registrar Mantenimiento
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Vehículo <span class="text-danger">*</span></label>
+                        <select id="idVehiculo" class="form-select">
+                            <option value="">Seleccionar vehículo...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                        <select id="tipo" class="form-select">
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="PREVENTIVO">Preventivo</option>
+                            <option value="CORRECTIVO">Correctivo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha <span class="text-danger">*</span></label>
+                        <input type="date" id="fecha" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                        <textarea id="descripcion" class="form-control" rows="2"
+                                  placeholder="Describe el trabajo realizado..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Técnico responsable <span class="text-danger">*</span></label>
+                        <input type="text" id="tecnico" class="form-control" placeholder="Nombre del técnico">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Costo (COP)</label>
+                        <input type="number" id="costo" class="form-control" placeholder="0">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Próximo mantenimiento (km)</label>
+                        <input type="number" id="proximoKm" class="form-control"
+                               placeholder="Ej: 50000">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Próxima fecha de mantenimiento</label>
+                        <input type="date" id="proximaFecha" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observaciones</label>
+                        <textarea id="observaciones" class="form-control" rows="2"
+                                  placeholder="Repuestos utilizados, notas adicionales..."></textarea>
+                    </div>
+                </div>
+                <div id="mensajeModal" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light fw-600 border"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-nuevo px-4" onclick="guardarMantenimiento()">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let todosLosMantenimientos = [];
+    let modalMantenimiento;
+    let rolActual = '';
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        rolActual = payload.rol || '';
+    } catch (e) {
+        window.location.href = '/login';
+    }
+ 
+    // ── SIDEBAR ──────────────────────────────────────────
+    function construirSidebar() {
+        const labelRol = document.getElementById('labelRol');
+        let menu = '';
+ 
+        if (rolActual === 'ADMINISTRADOR') {
+            labelRol.textContent = 'Panel Administrador';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/admin" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Gestión</div>
+                <a href="/usuarios/lista" class="menu-item"><i class="bi bi-people"></i> Usuarios</a>
+                <a href="/vehiculos/lista" class="menu-item"><i class="bi bi-car-front"></i> Vehículos</a>
+                <a href="/reservas/lista" class="menu-item"><i class="bi bi-calendar-check"></i> Reservas</a>
+                <a href="/pagos/lista" class="menu-item"><i class="bi bi-credit-card"></i> Pagos</a>
+                <a href="/mantenimientos/lista" class="menu-item active"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <div class="menu-label">Reportes</div>
+                <a href="/reportes/lista" class="menu-item"><i class="bi bi-bar-chart"></i> Reportes</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+        } else if (rolActual === 'MECANICO') {
+            labelRol.textContent = 'Panel Mecánico';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/mecanico" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Gestión</div>
+                <a href="/mantenimientos/lista" class="menu-item active"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+        }
+ 
+        document.getElementById('sidebarMenu').innerHTML = menu;
+        document.getElementById('subtituloVista').textContent =
+            rolActual === 'MECANICO' ? 'Panel Mecánico' : 'Administrador';
+ 
+        // Solo MECANICO y ADMINISTRADOR pueden registrar
+        document.getElementById('btnNuevo').style.display = 'inline-block';
+    }
+ 
+    // ── CARGAR ALERTAS ───────────────────────────────────
+    async function cargarAlertas() {
+        try {
+            const res = await fetch('/api/vehiculos/alertas', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const alertas = await res.json();
+                if (alertas.length > 0) {
+                    document.getElementById('seccionAlertas').style.display = 'block';
+                    document.getElementById('listaAlertas').innerHTML = alertas.map(v => `
+                        <div class="d-flex align-items-center gap-3 mb-2 p-2 rounded flex-wrap"
+                             style="background:#fff8f0;">
+                            <span class="alerta-badge">⚠ ${v.placa}</span>
+                            <span style="font-size:0.88rem;font-weight:600;">${v.marca} ${v.modelo}</span>
+                            <span class="text-muted" style="font-size:0.82rem;">
+                                Km actual: ${v.kilometrajeActual || 0} |
+                                Límite: ${v.kilometrajeMantenimiento || '—'} km |
+                                Fecha límite: ${v.fechaMantenimiento || '—'}
+                            </span>
+                            <span class="ms-auto">
+                                ${v.estado === 'EN_MANTENIMIENTO'
+                                    ? '<span style="background:#fff3e0;color:#e65100;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">🔧 En mantenimiento</span>'
+                                    : `<button class="btn btn-sm btn-warning fw-600"
+                                        onclick="iniciarMantenimiento('${v.id}','${v.placa}')">
+                                        <i class="bi bi-wrench me-1"></i>Iniciar mantenimiento
+                                      </button>`
+                                }
+                            </span>
+                        </div>`).join('');
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+ 
+    // ── CARGAR MANTENIMIENTOS ────────────────────────────
+    async function cargarMantenimientos() {
+        try {
+            const res = await fetch('/api/mantenimientos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) { window.location.href = '/login'; return; }
+            todosLosMantenimientos = await res.json();
+            renderTabla(todosLosMantenimientos);
+        } catch (e) {
+            document.getElementById('cuerpoTabla').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger py-4">
+                Error al cargar mantenimientos</td></tr>`;
+        }
+    }
+ 
+    function renderTabla(mantenimientos) {
+        const tbody = document.getElementById('cuerpoTabla');
+        document.getElementById('totalRegistros').textContent =
+            `Total: ${mantenimientos.length} mantenimiento(s)`;
+ 
+        if (mantenimientos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-5">
+                <i class="bi bi-tools fs-2 d-block mb-2"></i>
+                No hay mantenimientos registrados</td></tr>`;
+            return;
+        }
+ 
+        tbody.innerHTML = mantenimientos.map(m => {
+            const tipoBg = m.tipo === 'PREVENTIVO'
+                ? 'background:#e8f5e9;color:#2e7d32;'
+                : 'background:#ffebee;color:#c62828;';
+ 
+            return `
+            <tr>
+                <td>
+                    <strong>${m.placaVehiculo || '—'}</strong>
+                    <small class="d-block text-muted">${m.marcaModelo || ''}</small>
+                </td>
+                <td><span style="${tipoBg}padding:3px 10px;border-radius:20px;
+                    font-size:0.75rem;font-weight:600;">${m.tipo}</span></td>
+                <td>${m.fecha || '—'}</td>
+                <td>${m.tecnico || '—'}</td>
+                <td><strong>$${(m.costo || 0).toLocaleString('es-CO')}</strong></td>
+                <td>${m.proximoKm ? m.proximoKm.toLocaleString('es-CO') + ' km' : '—'}</td>
+                <td>${m.proximaFecha || '—'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" title="Eliminar"
+                        onclick="eliminarMantenimiento('${m.id}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+ 
+    function filtrar() {
+        const tipo = document.getElementById('filtroTipo').value;
+        const filtrados = tipo === ''
+            ? todosLosMantenimientos
+            : todosLosMantenimientos.filter(m => m.tipo === tipo);
+        renderTabla(filtrados);
+    }
+ 
+    // ── CARGAR VEHÍCULOS EN MODAL ────────────────────────
+    async function cargarVehiculos() {
+        try {
+            // Solo mostrar vehículos EN_MANTENIMIENTO
+            const res = await fetch('/api/vehiculos/estado/EN_MANTENIMIENTO', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const vehiculos = await res.json();
+                const select = document.getElementById('idVehiculo');
+                if (vehiculos.length === 0) {
+                    select.innerHTML =
+                        '<option value="">No hay vehículos en mantenimiento</option>';
+                } else {
+                    select.innerHTML = '<option value="">Seleccionar vehículo...</option>';
+                    vehiculos.forEach(v => {
+                        select.innerHTML += `<option value="${v.id}">
+                            ${v.placa} — ${v.marca} ${v.modelo}
+                        </option>`;
+                    });
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+ 
+    function abrirModal() {
+        cargarVehiculos();
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fecha').value = hoy;
+        document.getElementById('tipo').value = '';
+        document.getElementById('descripcion').value = '';
+        document.getElementById('tecnico').value = '';
+        document.getElementById('costo').value = '';
+        document.getElementById('proximoKm').value = '';
+        document.getElementById('proximaFecha').value = '';
+        document.getElementById('observaciones').value = '';
+        document.getElementById('mensajeModal').style.display = 'none';
+        modalMantenimiento.show();
+    }
+ 
+    async function guardarMantenimiento() {
+        const datos = {
+            idVehiculo:   document.getElementById('idVehiculo').value,
+            tipo:         document.getElementById('tipo').value,
+            fecha:        document.getElementById('fecha').value,
+            descripcion:  document.getElementById('descripcion').value,
+            tecnico:      document.getElementById('tecnico').value,
+            costo:        parseFloat(document.getElementById('costo').value) || 0,
+            proximoKm:    parseInt(document.getElementById('proximoKm').value) || null,
+            proximaFecha: document.getElementById('proximaFecha').value || null,
+            observaciones: document.getElementById('observaciones').value
+        };
+ 
+        const msg = document.getElementById('mensajeModal');
+        msg.style.display = 'block';
+ 
+        if (!datos.idVehiculo || !datos.tipo || !datos.fecha || !datos.descripcion || !datos.tecnico) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Por favor completa todos los campos obligatorios.';
+            return;
+        }
+ 
+        try {
+            const res = await fetch('/api/mantenimientos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(datos)
+            });
+ 
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = '✅ Mantenimiento registrado correctamente';
+                setTimeout(() => {
+                    modalMantenimiento.hide();
+                    cargarMantenimientos();
+                    cargarAlertas();
+                }, 1500);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + error;
+            }
+        } catch (e) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión';
+        }
+    }
+ 
+    async function iniciarMantenimiento(idVehiculo, placa) {
+        if (!confirm(`¿Confirmas poner el vehículo ${placa} en mantenimiento?\nEl vehículo no podrá ser reservado mientras esté en mantenimiento.`)) return;
+        try {
+            const res = await fetch(`/api/mantenimientos/vehiculo/${idVehiculo}/iniciar`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                cargarAlertas();
+                cargarMantenimientos();
+            } else {
+                const err = await res.text();
+                alert('Error: ' + err);
+            }
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function eliminarMantenimiento(id) {
+        if (!confirm('¿Confirmas eliminar este registro de mantenimiento?')) return;
+        try {
+            const res = await fetch(`/api/mantenimientos/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarMantenimientos();
+            else alert('Error al eliminar');
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+        modalMantenimiento = new bootstrap.Modal(
+            document.getElementById('modalMantenimiento'));
+        construirSidebar();
+        cargarAlertas();
+        cargarMantenimientos();
+    });
+</script>
+</body>
+</html>

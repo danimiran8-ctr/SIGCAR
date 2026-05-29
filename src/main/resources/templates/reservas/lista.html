@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Reservas — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar { width: 260px; min-height: 100vh; background: #1a1a2e; position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .card-table { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; padding: 12px 16px; }
+        .table td { font-size: 0.9rem; vertical-align: middle; padding: 12px 16px; }
+        .btn-nuevo { background: #f5c518; color: #1a1a2e; font-weight: 700; border: none; border-radius: 10px; padding: 10px 20px; transition: all 0.2s; cursor: pointer; }
+        .btn-nuevo:hover { background: #e0b015; }
+        .form-select-sm { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 9px 14px; font-size: 0.88rem; }
+        .modal-header { background: #1a1a2e; color: #fff; border-radius: 12px 12px 0 0; }
+        .modal-header .btn-close { filter: invert(1); }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small id="labelRol">Panel</small>
+    </div>
+    <div style="padding: 16px 0;" id="sidebarMenu"></div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-calendar-check me-2" style="color:#f5c518;"></i>
+            <span id="tituloVista">Gestión de Reservas</span>
+        </div>
+        <div style="font-size:0.85rem;color:#888;" id="subtituloVista"></div>
+    </div>
+ 
+    <div class="p-4">
+        <div class="card-table">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex gap-2 align-items-center">
+                    <select class="form-select-sm" id="filtroEstado" onchange="filtrar()">
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="CONFIRMADA">Confirmada</option>
+                        <option value="EN_CURSO">En curso</option>
+                        <option value="FINALIZADA">Finalizada</option>
+                        <option value="CANCELADA">Cancelada</option>
+                    </select>
+                </div>
+                <button class="btn-nuevo" id="btnNuevaReserva" onclick="abrirModalNuevo()" style="display:none;">
+                    <i class="bi bi-plus-lg me-2"></i>Nueva Reserva
+                </button>
+            </div>
+ 
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th id="colCliente">Cliente</th>
+                            <th>Vehículo</th>
+                            <th>Fecha inicio</th>
+                            <th>Fecha fin</th>
+                            <th>Días</th>
+                            <th>Valor total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                Cargando reservas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted" id="totalRegistros"></small>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL NUEVA RESERVA -->
+<div class="modal fade" id="modalReserva" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;border:none;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-700">Nueva Reserva</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                        <select id="idCliente" class="form-select">
+                            <option value="">Seleccionar cliente...</option>
+                        </select>
+                        <small class="text-muted" id="msgClientes" style="display:none;">
+                            <i class="bi bi-info-circle me-1"></i>Cargando clientes...
+                        </small>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Vehículo disponible <span class="text-danger">*</span></label>
+                        <select id="idVehiculo" class="form-select" onchange="calcularDias()">
+                            <option value="">Seleccionar vehículo...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha de inicio <span class="text-danger">*</span></label>
+                        <input type="date" id="fechaInicio" class="form-control" onchange="calcularDias()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fecha de fin <span class="text-danger">*</span></label>
+                        <input type="date" id="fechaFin" class="form-control" onchange="calcularDias()">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Días de alquiler</label>
+                        <input type="text" id="diasCalc" class="form-control" readonly
+                               style="background:#f8f9fa;" placeholder="Se calcula automáticamente">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Valor total estimado</label>
+                        <input type="text" id="valorCalc" class="form-control" readonly
+                               style="background:#fff8e1;font-weight:700;"
+                               placeholder="Se calcula automáticamente">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observaciones</label>
+                        <textarea id="observaciones" class="form-control" rows="2"
+                                  placeholder="Observaciones adicionales..."></textarea>
+                    </div>
+                </div>
+                <div id="mensajeModal" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light fw-600 border"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-nuevo px-4" onclick="guardarReserva()">
+                    <i class="bi bi-check-lg me-1"></i>Crear Reserva
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL REGISTRAR PAGO -->
+<div class="modal fade" id="modalPago" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;border:none;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-700">
+                    <i class="bi bi-credit-card me-2"></i>Registrar Pago
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="bg-light rounded-3 p-3 mb-2">
+                            <div class="fw-700" id="pagoInfoReserva"></div>
+                            <div class="text-muted small" id="pagoInfoCliente"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Monto a cobrar</label>
+                        <input type="text" id="pagoMonto" class="form-control" readonly
+                               style="background:#fff8e1;font-weight:700;font-size:1.1rem;">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Método de pago <span class="text-danger">*</span></label>
+                        <select id="pagoMetodo" class="form-select">
+                            <option value="">Seleccionar método...</option>
+                            <option value="EFECTIVO">💵 Efectivo</option>
+                            <option value="TRANSFERENCIA">🏦 Transferencia bancaria</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observaciones</label>
+                        <textarea id="pagoObservaciones" class="form-control" rows="2"
+                                  placeholder="Número de transferencia, referencia, etc..."></textarea>
+                    </div>
+                </div>
+                <div id="mensajePago" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light fw-600 border"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-nuevo px-4" onclick="confirmarPago()">
+                    <i class="bi bi-check-circle me-1"></i>Registrar Pago
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let todasLasReservas = [];
+    let modalReserva, modalPago;
+    let vehiculosDisponibles = [];
+    let rolActual = '';
+    let clienteIdActual = null;
+    let reservaIdPago = null;
+    let pagosRegistrados = {};  // idReserva → true/false
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        rolActual = payload.rol || '';
+    } catch (e) {
+        window.location.href = '/login';
+    }
+ 
+    // ── CONSTRUIR SIDEBAR SEGÚN ROL ──────────────────────
+    function construirSidebar() {
+        const labelRol = document.getElementById('labelRol');
+        let menu = '';
+ 
+        if (rolActual === 'ADMINISTRADOR') {
+            labelRol.textContent = 'Panel Administrador';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/admin" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Gestión</div>
+                <a href="/usuarios/lista" class="menu-item"><i class="bi bi-people"></i> Usuarios</a>
+                <a href="/vehiculos/lista" class="menu-item"><i class="bi bi-car-front"></i> Vehículos</a>
+                <a href="/reservas/lista" class="menu-item active"><i class="bi bi-calendar-check"></i> Reservas</a>
+                <a href="/pagos/lista" class="menu-item"><i class="bi bi-credit-card"></i> Pagos</a>
+                <a href="/mantenimientos/lista" class="menu-item"><i class="bi bi-tools"></i> Mantenimientos</a>
+                <div class="menu-label">Reportes</div>
+                <a href="/reportes/lista" class="menu-item"><i class="bi bi-bar-chart"></i> Reportes</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+ 
+        } else if (rolActual === 'AGENTE') {
+            labelRol.textContent = 'Panel Agente';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/agente" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Gestión</div>
+                <a href="/vehiculos/lista" class="menu-item"><i class="bi bi-car-front"></i> Vehículos</a>
+                <a href="/reservas/lista" class="menu-item active"><i class="bi bi-calendar-check"></i> Reservas</a>
+                <a href="/pagos/lista" class="menu-item"><i class="bi bi-credit-card"></i> Pagos</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+ 
+        } else if (rolActual === 'CLIENTE') {
+            labelRol.textContent = 'Mi cuenta';
+            menu = `
+                <div class="menu-label">Principal</div>
+                <a href="/dashboard/cliente" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                <div class="menu-label">Mis datos</div>
+                <a href="/reservas/lista" class="menu-item active"><i class="bi bi-calendar-check"></i> Mis Reservas</a>
+                <a href="/cliente/reservar" class="menu-item"><i class="bi bi-plus-circle"></i> Nueva Reserva</a>
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>`;
+        }
+ 
+        document.getElementById('sidebarMenu').innerHTML = menu;
+    }
+ 
+    // ── ADAPTAR VISTA SEGÚN ROL ──────────────────────────
+    function adaptarVista() {
+        if (rolActual === 'CLIENTE') {
+            document.getElementById('tituloVista').textContent = 'Mis Reservas';
+            document.getElementById('subtituloVista').textContent = 'Historial de tus solicitudes';
+            document.getElementById('colCliente').style.display = 'none';
+            document.getElementById('btnNuevaReserva').style.display = 'none';
+        } else {
+            document.getElementById('subtituloVista').textContent = 'Administrador y Agente';
+            document.getElementById('btnNuevaReserva').style.display = 'inline-block';
+        }
+    }
+ 
+    const coloresEstado = {
+        'PENDIENTE':  { bg: '#fff8e1', color: '#f59e0b' },
+        'CONFIRMADA': { bg: '#e3f2fd', color: '#1976d2' },
+        'EN_CURSO':   { bg: '#e8f5e9', color: '#2e7d32' },
+        'FINALIZADA': { bg: '#f3e5f5', color: '#7b1fa2' },
+        'CANCELADA':  { bg: '#ffebee', color: '#c62828' },
+    };
+ 
+    // ── CARGAR PAGOS REGISTRADOS ─────────────────────────
+    async function cargarPagosRegistrados(reservas) {
+        if (rolActual === 'CLIENTE') {
+            // Cliente: verificar cada reserva individualmente
+            // usando el endpoint permitido /api/pagos/reserva/{id}
+            const promesas = reservas.map(async r => {
+                try {
+                    const res = await fetch(`/api/pagos/reserva/${r.id}`, {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (res.ok) pagosRegistrados[r.id] = true;
+                } catch (e) {}
+            });
+            await Promise.all(promesas);
+        } else {
+            // Admin y Agente: cargar todos los pagos de una vez
+            try {
+                const res = await fetch('/api/pagos', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    const pagos = await res.json();
+                    pagos.forEach(p => { pagosRegistrados[p.idReserva] = true; });
+                }
+            } catch (e) { console.error('Error cargando pagos', e); }
+        }
+    }
+ 
+    // ── CARGAR RESERVAS SEGÚN ROL ────────────────────────
+    async function cargarReservas() {
+        try {
+            let url = '/api/reservas';
+ 
+            if (rolActual === 'CLIENTE') {
+                const resPerfil = await fetch('/api/auth/perfil', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!resPerfil.ok) { window.location.href = '/login'; return; }
+                const perfil = await resPerfil.json();
+                clienteIdActual = perfil.id;
+                url = `/api/reservas/cliente/${clienteIdActual}`;
+            }
+ 
+            const res = await fetch(url, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+ 
+            if (!res.ok) { window.location.href = '/login'; return; }
+ 
+            todasLasReservas = await res.json();
+ 
+            // Cargar pagos antes de renderizar
+            await cargarPagosRegistrados(todasLasReservas);
+ 
+            renderTabla(todasLasReservas);
+ 
+        } catch (e) {
+            document.getElementById('cuerpoTabla').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger py-4">
+                Error al cargar reservas</td></tr>`;
+        }
+    }
+ 
+    function renderTabla(reservas) {
+        const tbody = document.getElementById('cuerpoTabla');
+        const esCliente = rolActual === 'CLIENTE';
+        const cols = esCliente ? 7 : 8;
+ 
+        document.getElementById('totalRegistros').textContent =
+            `Total: ${reservas.length} reserva(s)`;
+ 
+        if (reservas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${cols}" class="text-center text-muted py-5">
+                <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                ${esCliente ? 'Aún no tienes reservas. <a href="/cliente/reservar">¡Reserva ahora!</a>' : 'No hay reservas registradas'}
+                </td></tr>`;
+            return;
+        }
+ 
+        tbody.innerHTML = reservas.map(r => {
+            const est = coloresEstado[r.estado] || { bg: '#f0f0f0', color: '#666' };
+            const tienePago = pagosRegistrados[r.id] || false;
+ 
+            let acciones = '';
+            if (esCliente) {
+                const puedeContrato = ['CONFIRMADA','EN_CURSO','FINALIZADA'].includes(r.estado);
+                const puedeFactura  = tienePago;
+                acciones = `
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-warning" title="Descargar contrato"
+                            onclick="descargarContrato('${r.id}')"
+                            ${!puedeContrato ? 'disabled' : ''}>
+                            <i class="bi bi-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" title="Descargar factura"
+                            onclick="descargarFactura('${r.id}')"
+                            ${!puedeFactura ? 'disabled' : ''}>
+                            <i class="bi bi-receipt"></i>
+                        </button>
+                    </div>`;
+            } else {
+                const puedePagar   = ['CONFIRMADA','EN_CURSO'].includes(r.estado) && !tienePago;
+                const puedeFactura = tienePago;
+                acciones = `
+                    <div class="d-flex gap-1 flex-wrap">
+                        <button class="btn btn-sm btn-outline-success" title="Confirmar"
+                            onclick="cambiarEstado('${r.id}','CONFIRMADA')"
+                            ${r.estado !== 'PENDIENTE' ? 'disabled' : ''}>
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" title="En curso"
+                            onclick="cambiarEstado('${r.id}','EN_CURSO')"
+                            ${r.estado !== 'CONFIRMADA' ? 'disabled' : ''}>
+                            <i class="bi bi-play"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" title="Finalizar"
+                            onclick="cambiarEstado('${r.id}','FINALIZADA')"
+                            ${r.estado !== 'EN_CURSO' ? 'disabled' : ''}>
+                            <i class="bi bi-stop"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" title="Descargar contrato"
+                            onclick="descargarContrato('${r.id}')">
+                            <i class="bi bi-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-sm ${tienePago ? 'btn-success' : 'btn-outline-dark'}"
+                            title="${tienePago ? 'Pago registrado' : 'Registrar pago'}"
+                            onclick="abrirModalPago('${r.id}','${r.nombreCliente || ''}','${r.placaVehiculo || ''}',${r.valorTotal || 0})"
+                            ${!puedePagar && !tienePago ? 'disabled' : ''}
+                            ${tienePago ? 'disabled' : ''}>
+                            <i class="bi bi-${tienePago ? 'check-circle-fill' : 'cash-coin'}"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" title="Descargar factura"
+                            onclick="descargarFactura('${r.id}')"
+                            ${!puedeFactura ? 'disabled' : ''}>
+                            <i class="bi bi-receipt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" title="Cancelar"
+                            onclick="cancelarReserva('${r.id}')"
+                            ${['FINALIZADA','CANCELADA'].includes(r.estado) ? 'disabled' : ''}>
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>`;
+            }
+ 
+            return `
+            <tr>
+                ${!esCliente ? `<td><strong>${r.nombreCliente || r.idCliente}</strong></td>` : ''}
+                <td>
+                    <strong>${r.placaVehiculo || '—'}</strong>
+                    <small class="d-block text-muted">${r.marcaModelo || ''}</small>
+                </td>
+                <td>${r.fechaInicio || '—'}</td>
+                <td>${r.fechaFin || '—'}</td>
+                <td><span class="badge bg-secondary">${r.diasAlquiler} días</span></td>
+                <td><strong>$${(r.valorTotal || 0).toLocaleString('es-CO')}</strong></td>
+                <td><span style="background:${est.bg};color:${est.color};
+                    padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;">
+                    ${r.estado}</span></td>
+                <td>${acciones}</td>
+            </tr>`;
+        }).join('');
+    }
+ 
+    function filtrar() {
+        const estado = document.getElementById('filtroEstado').value;
+        const filtradas = estado === ''
+            ? todasLasReservas
+            : todasLasReservas.filter(r => r.estado === estado);
+        renderTabla(filtradas);
+    }
+ 
+    // ── MODAL PAGO ───────────────────────────────────────
+    function abrirModalPago(idReserva, nombreCliente, placaVehiculo, valorTotal) {
+        reservaIdPago = idReserva;
+        document.getElementById('pagoInfoReserva').textContent =
+            placaVehiculo + ' — Reserva';
+        document.getElementById('pagoInfoCliente').textContent =
+            'Cliente: ' + nombreCliente;
+        document.getElementById('pagoMonto').value =
+            '$' + valorTotal.toLocaleString('es-CO') + ' COP';
+        document.getElementById('pagoMetodo').value = '';
+        document.getElementById('pagoObservaciones').value = '';
+        document.getElementById('mensajePago').style.display = 'none';
+        modalPago.show();
+    }
+ 
+    async function confirmarPago() {
+        const metodo = document.getElementById('pagoMetodo').value;
+        const observaciones = document.getElementById('pagoObservaciones').value;
+        const msg = document.getElementById('mensajePago');
+ 
+        if (!metodo) {
+            msg.style.display = 'block';
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Selecciona el método de pago.';
+            return;
+        }
+ 
+        try {
+            const res = await fetch('/api/pagos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    idReserva: reservaIdPago,
+                    metodoPago: metodo,
+                    observaciones: observaciones
+                })
+            });
+ 
+            msg.style.display = 'block';
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = '✅ Pago registrado correctamente';
+                setTimeout(() => { modalPago.hide(); cargarReservas(); }, 1500);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + error;
+            }
+        } catch (e) {
+            msg.style.display = 'block';
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión';
+        }
+    }
+ 
+    // ── DESCARGAR FACTURA ────────────────────────────────
+    async function descargarFactura(idReserva) {
+        try {
+            const res = await fetch(`/api/pagos/reserva/${idReserva}/factura`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `factura-${idReserva}.pdf`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert('No hay factura disponible para esta reserva.');
+            }
+        } catch (e) { alert('Error al descargar factura'); }
+    }
+ 
+    // ── SELECTORES MODAL RESERVA ─────────────────────────
+    async function cargarSelectores() {
+        document.getElementById('idCliente').innerHTML = '<option value="">Seleccionar cliente...</option>';
+        document.getElementById('idVehiculo').innerHTML = '<option value="">Seleccionar vehículo...</option>';
+ 
+        const msgClientes = document.getElementById('msgClientes');
+        msgClientes.style.display = 'block';
+        msgClientes.textContent = 'Cargando clientes...';
+ 
+        try {
+            const resU = await fetch('/api/usuarios/clientes', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (resU.ok) {
+                const clientes = await resU.json();
+                const selectCliente = document.getElementById('idCliente');
+                if (clientes.length === 0) {
+                    msgClientes.textContent = 'No hay clientes activos registrados.';
+                } else {
+                    clientes.forEach(u => {
+                        selectCliente.innerHTML +=
+                            `<option value="${u.id}">${u.nombres} ${u.apellidos} — ${u.correo}</option>`;
+                    });
+                    msgClientes.style.display = 'none';
+                }
+            } else {
+                msgClientes.innerHTML = '<i class="bi bi-exclamation-triangle me-1 text-warning"></i>' +
+                    'Error al cargar clientes. Verifica tu sesión.';
+            }
+        } catch (e) {
+            msgClientes.textContent = 'Error de conexión al cargar clientes.';
+        }
+ 
+        const resV = await fetch('/api/vehiculos/disponibles', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (resV.ok) {
+            vehiculosDisponibles = await resV.json();
+            const selectVehiculo = document.getElementById('idVehiculo');
+            vehiculosDisponibles.forEach(v => {
+                selectVehiculo.innerHTML +=
+                    `<option value="${v.id}" data-precio="${v.precioPorDia}">
+                        ${v.placa} — ${v.marca} ${v.modelo} — $${v.precioPorDia.toLocaleString('es-CO')}/día
+                    </option>`;
+            });
+        }
+    }
+ 
+    function calcularDias() {
+        const fi = document.getElementById('fechaInicio').value;
+        const ff = document.getElementById('fechaFin').value;
+        const idV = document.getElementById('idVehiculo').value;
+ 
+        if (fi && ff && idV) {
+            const dias = Math.round((new Date(ff) - new Date(fi)) / (1000 * 60 * 60 * 24));
+            if (dias > 0) {
+                const vehiculo = vehiculosDisponibles.find(v => v.id === idV);
+                const precio = vehiculo ? vehiculo.precioPorDia : 0;
+                document.getElementById('diasCalc').value = dias + ' días';
+                document.getElementById('valorCalc').value = '$' + (dias * precio).toLocaleString('es-CO') + ' COP';
+            } else {
+                document.getElementById('diasCalc').value = 'Fechas inválidas';
+                document.getElementById('valorCalc').value = '';
+            }
+        }
+    }
+ 
+    async function abrirModalNuevo() {
+        await cargarSelectores();
+        document.getElementById('fechaInicio').value = '';
+        document.getElementById('fechaFin').value = '';
+        document.getElementById('diasCalc').value = '';
+        document.getElementById('valorCalc').value = '';
+        document.getElementById('observaciones').value = '';
+        document.getElementById('mensajeModal').style.display = 'none';
+ 
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('fechaInicio').min = hoy;
+        document.getElementById('fechaFin').min = hoy;
+ 
+        modalReserva.show();
+    }
+ 
+    async function guardarReserva() {
+        const datos = {
+            idCliente:     document.getElementById('idCliente').value,
+            idVehiculo:    document.getElementById('idVehiculo').value,
+            fechaInicio:   document.getElementById('fechaInicio').value,
+            fechaFin:      document.getElementById('fechaFin').value,
+            observaciones: document.getElementById('observaciones').value,
+        };
+ 
+        const msg = document.getElementById('mensajeModal');
+        msg.style.display = 'block';
+ 
+        if (!datos.idCliente || !datos.idVehiculo || !datos.fechaInicio || !datos.fechaFin) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Por favor completa todos los campos obligatorios.';
+            return;
+        }
+ 
+        try {
+            const res = await fetch('/api/reservas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(datos)
+            });
+ 
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = '✅ Reserva creada correctamente';
+                setTimeout(() => { modalReserva.hide(); cargarReservas(); }, 1500);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + error;
+            }
+        } catch (e) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión';
+        }
+    }
+ 
+    async function cambiarEstado(id, estado) {
+        if (!confirm(`¿Confirmas cambiar el estado a ${estado}?`)) return;
+        try {
+            const res = await fetch(`/api/reservas/${id}/estado/${estado}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarReservas();
+            else alert('Error al cambiar estado');
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function cancelarReserva(id) {
+        if (!confirm('¿Confirmas cancelar esta reserva? El vehículo quedará disponible.')) return;
+        try {
+            const res = await fetch(`/api/reservas/${id}/cancelar`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarReservas();
+            else {
+                const err = await res.text();
+                alert('Error: ' + err);
+            }
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function descargarContrato(id) {
+        try {
+            const res = await fetch(`/api/reservas/${id}/contrato`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `contrato-${id}.pdf`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                const err = await res.text();
+                alert('Error: ' + err);
+            }
+        } catch (e) { alert('Error al descargar contrato'); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+        modalReserva = new bootstrap.Modal(document.getElementById('modalReserva'));
+        modalPago    = new bootstrap.Modal(document.getElementById('modalPago'));
+        construirSidebar();
+        adaptarVista();
+        cargarReservas();
+    });
+</script>
+</body>
+</html>

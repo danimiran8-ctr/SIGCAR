@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 0;
+        }
+        .registro-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .brand-logo { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; }
+        .brand-logo span { color: #f5c518; }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select {
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 11px 16px;
+            font-size: 0.93rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #f5c518;
+            box-shadow: 0 0 0 3px rgba(245,197,24,0.15);
+        }
+        .btn-registrar {
+            background: #f5c518;
+            color: #1a1a2e;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-size: 1rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-registrar:hover { background: #e0b015; transform: translateY(-1px); }
+        .btn-volver {
+            border: 2px solid #1a1a2e;
+            color: #1a1a2e;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 11px;
+            width: 100%;
+            background: transparent;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+        }
+        .btn-volver:hover { background: #1a1a2e; color: #f5c518; }
+        .alert-error {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #c53030;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.88rem;
+        }
+        .alert-success {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            color: #276749;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.88rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="registro-card">
+
+        <!-- Logo -->
+        <div class="text-center mb-4">
+            <div class="brand-logo">
+                <i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span>
+            </div>
+            <p class="text-muted mt-1" style="font-size:0.82rem;">RentCar Express S.A.S.</p>
+        </div>
+
+        <h5 class="fw-700 mb-1" style="color:#1a1a2e;">Crear cuenta</h5>
+        <p class="text-muted mb-4" style="font-size:0.88rem;">Completa el formulario para registrarte como cliente</p>
+
+        <!-- Mensajes -->
+        <div class="alert-error mb-3" th:if="${error}" th:text="${error}"></div>
+        <div class="alert-success mb-3" th:if="${mensaje}" th:text="${mensaje}"></div>
+
+        <!-- Formulario -->
+        <form id="formRegistro">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nombres</label>
+                    <input type="text" id="nombres" class="form-control" placeholder="Ej: Juan Daniel" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Apellidos</label>
+                    <input type="text" id="apellidos" class="form-control" placeholder="Ej: Miranda Palmera" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Correo electrónico</label>
+                    <input type="email" id="correo" class="form-control" placeholder="correo@ejemplo.com" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Teléfono</label>
+                    <input type="tel" id="telefono" class="form-control" placeholder="300 000 0000">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" id="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="col-12">
+                    <div id="mensajeRegistro" class="mb-2" style="display:none;"></div>
+                    <button type="button" class="btn-registrar" onclick="registrar()">
+                        <i class="bi bi-person-plus me-2"></i>Crear cuenta
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <a href="/login" class="btn-volver">
+            <i class="bi bi-arrow-left me-2"></i>Ya tengo cuenta
+        </a>
+
+        <p class="text-center mt-3 mb-0" style="font-size:0.82rem; color:#aaa;">
+            Al registrarte aceptas nuestros términos y condiciones.
+        </p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function registrar() {
+            const datos = {
+                nombres:   document.getElementById('nombres').value,
+                apellidos: document.getElementById('apellidos').value,
+                correo:    document.getElementById('correo').value,
+                telefono:  document.getElementById('telefono').value,
+                password:  document.getElementById('password').value,
+                rol:       'CLIENTE'
+            };
+
+            const msg = document.getElementById('mensajeRegistro');
+            msg.style.display = 'block';
+
+            try {
+                const res = await fetch('/api/auth/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+
+                if (res.ok) {
+                    msg.className = 'alert-success';
+                    msg.innerHTML = '✅ Cuenta creada exitosamente. Redirigiendo...';
+                    setTimeout(() => window.location.href = '/login', 2000);
+                } else {
+                    const error = await res.text();
+                    msg.className = 'alert-error';
+                    msg.innerHTML = '❌ ' + error;
+                }
+            } catch (e) {
+                msg.className = 'alert-error';
+                msg.innerHTML = '❌ Error de conexión. Intenta de nuevo.';
+            }
+        }
+    </script>
+</body>
+</html>

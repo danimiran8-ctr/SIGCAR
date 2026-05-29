@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar {
+            width: 260px; min-height: 100vh;
+            background: #1a1a2e; position: fixed;
+            top: 0; left: 0; z-index: 100;
+        }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .card-table { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; padding: 12px 16px; }
+        .table td { font-size: 0.9rem; vertical-align: middle; padding: 12px 16px; }
+        .table tbody tr:hover { background: #fafafa; }
+        .btn-nuevo { background: #f5c518; color: #1a1a2e; font-weight: 700; border: none; border-radius: 10px; padding: 10px 20px; transition: all 0.2s; }
+        .btn-nuevo:hover { background: #e0b015; }
+        .search-input { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 9px 16px; font-size: 0.9rem; width: 280px; }
+        .search-input:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); outline: none; }
+        .rol-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .modal-header { background: #1a1a2e; color: #fff; border-radius: 12px 12px 0 0; }
+        .modal-header .btn-close { filter: invert(1); }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); }
+    </style>
+</head>
+<body>
+ 
+	<!-- SIDEBAR -->
+	<div class="sidebar">
+	    <div class="sidebar-brand">
+	        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+	        <small>Panel Administrador</small>
+	    </div>
+	    <div style="padding: 16px 0;">
+	        <div class="menu-label">Principal</div>
+	        <a href="/dashboard/admin" class="menu-item"><i class="bi bi-grid-1x2"></i> Dashboard</a> <div class="menu-label">Gestión</div>
+	        <a href="/usuarios/lista" class="menu-item active"><i class="bi bi-people"></i> Usuarios</a>
+	        <a href="/vehiculos/lista" class="menu-item"><i class="bi bi-car-front"></i> Vehículos</a>
+	        <a href="/reservas/lista" class="menu-item"><i class="bi bi-calendar-check"></i> Reservas</a>
+	        <a href="/pagos/lista" class="menu-item"><i class="bi bi-credit-card"></i> Pagos</a>
+	        <a href="/mantenimientos/lista" class="menu-item"><i class="bi bi-tools"></i> Mantenimientos</a>
+	        <div class="menu-label">Reportes</div>
+	        <a href="/reportes/lista" class="menu-item"><i class="bi bi-bar-chart"></i> Reportes</a>
+	        <div class="menu-label">Cuenta</div>
+	        <a href="/logout" class="menu-item"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a>
+	    </div>
+	</div>
+		
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-people me-2" style="color:#f5c518;"></i>Gestión de Usuarios
+        </div>
+        <div style="font-size:0.85rem;color:#888;">
+            Solo Administrador
+        </div>
+    </div>
+ 
+    <div class="p-4">
+        <div class="card-table">
+ 
+            <!-- Barra de acciones -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" class="search-input" id="busqueda"
+                           placeholder="🔍 Buscar usuario..." onkeyup="filtrar()">
+                    <select class="form-select" style="width:160px;border-radius:10px;"
+                            id="filtroRol" onchange="filtrar()">
+                        <option value="">Todos los roles</option>
+                        <option value="ADMINISTRADOR">Administrador</option>
+                        <option value="AGENTE">Agente</option>
+                        <option value="CLIENTE">Cliente</option>
+                        <option value="MECANICO">Mecánico</option>
+                        <option value="AUDITOR">Auditor</option>
+                    </select>
+                </div>
+                <button class="btn-nuevo" onclick="abrirModalNuevo()">
+                    <i class="bi bi-plus-lg me-2"></i>Nuevo Usuario
+                </button>
+            </div>
+ 
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table" id="tablaUsuarios">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nombre completo</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                Cargando usuarios...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+ 
+            <!-- Info total -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted" id="totalRegistros"></small>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL CREAR / EDITAR -->
+<div class="modal fade" id="modalUsuario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px; border:none;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-700" id="modalTitulo">Nuevo Usuario</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="userId">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nombres</label>
+                        <input type="text" id="nombres" class="form-control" placeholder="Nombres" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Apellidos</label>
+                        <input type="text" id="apellidos" class="form-control" placeholder="Apellidos" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Correo electrónico</label>
+                        <input type="email" id="correo" class="form-control" placeholder="correo@ejemplo.com" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" id="telefono" class="form-control" placeholder="300 000 0000">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Rol</label>
+                        <select id="rol" class="form-select">
+                            <option value="ADMINISTRADOR">Administrador</option>
+                            <option value="AGENTE">Agente</option>
+                            <option value="CLIENTE" selected>Cliente</option>
+                            <option value="MECANICO">Mecánico</option>
+                            <option value="AUDITOR">Auditor</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Contraseña <small class="text-muted">(dejar vacío para no cambiar)</small></label>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••">
+                    </div>
+                </div>
+                <div id="mensajeModal" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light fw-600 border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-nuevo px-4" onclick="guardarUsuario()">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let todosLosUsuarios = [];
+    let modalUsuario;
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    const coloresRol = {
+        'ADMINISTRADOR': { bg: '#fff8e1', color: '#f59e0b' },
+        'AGENTE':        { bg: '#e3f2fd', color: '#1976d2' },
+        'CLIENTE':       { bg: '#e8f5e9', color: '#388e3c' },
+        'MECANICO':      { bg: '#fff3e0', color: '#e65100' },
+        'AUDITOR':       { bg: '#f3e5f5', color: '#7b1fa2' },
+    };
+ 
+    async function cargarUsuarios() {
+        try {
+            const res = await fetch('/api/usuarios', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) { window.location.href = '/login'; return; }
+            todosLosUsuarios = await res.json();
+            renderTabla(todosLosUsuarios);
+        } catch (e) {
+            document.getElementById('cuerpoTabla').innerHTML =
+                `<tr><td colspan="7" class="text-center text-danger py-4">Error al cargar usuarios</td></tr>`;
+        }
+    }
+ 
+    function renderTabla(usuarios) {
+        const tbody = document.getElementById('cuerpoTabla');
+        document.getElementById('totalRegistros').textContent =
+            `Total: ${usuarios.length} usuario(s)`;
+ 
+        if (usuarios.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-5">
+                <i class="bi bi-people fs-2 d-block mb-2"></i>No hay usuarios registrados</td></tr>`;
+            return;
+        }
+ 
+        const c = coloresRol;
+        tbody.innerHTML = usuarios.map((u, i) => {
+            const rol = c[u.rol] || { bg: '#f0f0f0', color: '#666' };
+            return `
+            <tr>
+                <td><span class="text-muted">${i + 1}</span></td>
+                <td><strong>${u.nombres} ${u.apellidos}</strong></td>
+                <td><small>${u.correo}</small></td>
+                <td><small>${u.telefono || '—'}</small></td>
+                <td><span class="rol-badge" style="background:${rol.bg};color:${rol.color};">${u.rol}</span></td>
+                <td>${u.estado
+                    ? '<span class="badge bg-success">Activo</span>'
+                    : '<span class="badge bg-danger">Inactivo</span>'}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-warning" title="Editar"
+                                onclick="abrirModalEditar('${u.id}','${u.nombres}','${u.apellidos}','${u.correo}','${u.telefono||''}','${u.rol}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${u.estado
+                            ? `<button class="btn btn-sm btn-outline-danger" title="Desactivar"
+                                onclick="cambiarEstado('${u.id}','desactivar')">
+                                <i class="bi bi-toggle-on"></i></button>`
+                            : `<button class="btn btn-sm btn-outline-success" title="Activar"
+                                onclick="cambiarEstado('${u.id}','activar')">
+                                <i class="bi bi-toggle-off"></i></button>`}
+                        <button class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                onclick="eliminarUsuario('${u.id}','${u.nombres}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+ 
+    function filtrar() {
+        const texto = document.getElementById('busqueda').value.toLowerCase();
+        const rol = document.getElementById('filtroRol').value;
+        const filtrados = todosLosUsuarios.filter(u => {
+            const coincideTexto = (u.nombres + ' ' + u.apellidos + ' ' + u.correo)
+                .toLowerCase().includes(texto);
+            const coincideRol = rol === '' || u.rol === rol;
+            return coincideTexto && coincideRol;
+        });
+        renderTabla(filtrados);
+    }
+ 
+    function abrirModalNuevo() {
+        document.getElementById('modalTitulo').textContent = 'Nuevo Usuario';
+        document.getElementById('userId').value = '';
+        document.getElementById('nombres').value = '';
+        document.getElementById('apellidos').value = '';
+        document.getElementById('correo').value = '';
+        document.getElementById('correo').disabled = false;
+        document.getElementById('telefono').value = '';
+        document.getElementById('rol').value = 'CLIENTE';
+        document.getElementById('password').value = '';
+        document.getElementById('mensajeModal').style.display = 'none';
+        modalUsuario.show();
+    }
+ 
+    function abrirModalEditar(id, nombres, apellidos, correo, telefono, rol) {
+        document.getElementById('modalTitulo').textContent = 'Editar Usuario';
+        document.getElementById('userId').value = id;
+        document.getElementById('nombres').value = nombres;
+        document.getElementById('apellidos').value = apellidos;
+        document.getElementById('correo').value = correo;
+        document.getElementById('correo').disabled = true;
+        document.getElementById('telefono').value = telefono;
+        document.getElementById('rol').value = rol;
+        document.getElementById('password').value = '';
+        document.getElementById('mensajeModal').style.display = 'none';
+        modalUsuario.show();
+    }
+ 
+    async function guardarUsuario() {
+        const id = document.getElementById('userId').value;
+        const datos = {
+            nombres:   document.getElementById('nombres').value,
+            apellidos: document.getElementById('apellidos').value,
+            correo:    document.getElementById('correo').value,
+            telefono:  document.getElementById('telefono').value,
+            rol:       document.getElementById('rol').value,
+            password:  document.getElementById('password').value,
+        };
+ 
+        const msg = document.getElementById('mensajeModal');
+        msg.style.display = 'block';
+ 
+        try {
+            let res;
+            if (id) {
+                res = await fetch(`/api/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(datos)
+                });
+            } else {
+                res = await fetch('/api/auth/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify(datos)
+                });
+            }
+ 
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = '✅ Usuario guardado correctamente';
+                setTimeout(() => { modalUsuario.hide(); cargarUsuarios(); }, 1500);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + error;
+            }
+        } catch (e) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión';
+        }
+    }
+ 
+    async function cambiarEstado(id, accion) {
+        if (!confirm(`¿Confirmas ${accion} este usuario?`)) return;
+        try {
+            const res = await fetch(`/api/usuarios/${id}/${accion}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarUsuarios();
+            else alert('Error al cambiar estado');
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function eliminarUsuario(id, nombre) {
+        if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+        try {
+            const res = await fetch(`/api/usuarios/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarUsuarios();
+            else alert('Error al eliminar usuario');
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+        modalUsuario = new bootstrap.Modal(document.getElementById('modalUsuario'));
+        cargarUsuarios();
+    });
+</script>
+</body>
+</html>

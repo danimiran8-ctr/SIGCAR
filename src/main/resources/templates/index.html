@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIGCAR – RentCar Express S.A.S.</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .navbar-sigcar { background-color: #1a1a2e; padding: 14px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        .navbar-brand span { color: #f5c518; font-weight: 800; font-size: 1.4rem; }
+        .navbar-brand small { color: #aaa; font-size: 0.75rem; display: block; }
+        .btn-login { border: 2px solid #f5c518; color: #f5c518; font-weight: 600; border-radius: 8px; padding: 7px 20px; transition: all 0.2s; }
+        .btn-login:hover { background: #f5c518; color: #1a1a2e; }
+        .btn-register { background: #f5c518; color: #1a1a2e; font-weight: 700; border-radius: 8px; padding: 7px 20px; border: none; transition: all 0.2s; }
+        .btn-register:hover { background: #e0b015; color: #1a1a2e; }
+        .hero-section { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 480px; display: flex; align-items: center; padding: 60px 0 40px; }
+        .hero-title { font-size: 2.8rem; font-weight: 800; color: #fff; line-height: 1.2; }
+        .hero-title span { color: #f5c518; }
+        .hero-subtitle { color: #b0b8c8; font-size: 1.1rem; margin: 15px 0 30px; }
+        .search-box { background: #fff; border-radius: 16px; padding: 20px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.25); }
+        .search-box .form-label { font-size: 0.75rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+        .search-box .form-control, .search-box .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; font-size: 0.95rem; }
+        .search-box .form-control:focus, .search-box .form-select:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); }
+        .btn-buscar { background: #f5c518; color: #1a1a2e; font-weight: 700; font-size: 1rem; border: none; border-radius: 10px; padding: 12px 28px; width: 100%; transition: all 0.2s; }
+        .btn-buscar:hover { background: #e0b015; transform: translateY(-1px); }
+        .stats-section { background: #f5c518; padding: 18px 0; }
+        .stat-item { text-align: center; }
+        .stat-item .number { font-size: 1.6rem; font-weight: 800; color: #1a1a2e; }
+        .stat-item .label { font-size: 0.8rem; font-weight: 600; color: #555; }
+        .section-title { font-size: 1.6rem; font-weight: 700; color: #1a1a2e; }
+        .section-title span { color: #f5c518; }
+        .category-card { background: #fff; border: 2px solid #f0f0f0; border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.25s; }
+        .category-card:hover { border-color: #f5c518; box-shadow: 0 6px 20px rgba(245,197,24,0.2); transform: translateY(-3px); }
+        .category-card i { font-size: 2.2rem; color: #f5c518; }
+        .category-card p { font-weight: 600; color: #1a1a2e; margin: 8px 0 0; font-size: 0.9rem; }
+        .vehicle-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #f0f0f0; transition: all 0.25s; height: 100%; }
+        .vehicle-card:hover { box-shadow: 0 8px 35px rgba(0,0,0,0.15); transform: translateY(-4px); }
+        .vehicle-img-placeholder { height: 180px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); display: flex; align-items: center; justify-content: center; }
+        .vehicle-img-placeholder i { font-size: 4rem; color: #ccc; }
+        .badge-disponible { background: #198754; font-size: 0.72rem; }
+        .vehicle-card .card-body { padding: 18px; }
+        .vehicle-card .marca-modelo { font-weight: 700; color: #1a1a2e; font-size: 1.05rem; }
+        .vehicle-card .categoria { color: #888; font-size: 0.82rem; margin-bottom: 12px; }
+        .vehicle-card .precio { font-size: 1.3rem; font-weight: 800; color: #1a1a2e; }
+        .vehicle-card .precio small { font-size: 0.75rem; color: #888; font-weight: 400; }
+        .btn-reservar { background: #1a1a2e; color: #f5c518; border: none; border-radius: 8px; font-weight: 600; padding: 9px 0; width: 100%; transition: all 0.2s; }
+        .btn-reservar:hover { background: #f5c518; color: #1a1a2e; }
+        .vehicle-specs { font-size: 0.8rem; color: #666; }
+        .vehicle-specs i { color: #f5c518; }
+        .why-section { background: #f8f9fa; }
+        .why-card { text-align: center; padding: 30px 20px; }
+        .why-icon { width: 64px; height: 64px; background: #f5c518; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .why-icon i { font-size: 1.6rem; color: #1a1a2e; }
+        .footer-sigcar { background: #1a1a2e; color: #aaa; padding: 40px 0 20px; }
+        .footer-sigcar h6 { color: #f5c518; font-weight: 700; margin-bottom: 14px; }
+        .footer-sigcar a { color: #aaa; text-decoration: none; font-size: 0.9rem; }
+        .footer-sigcar a:hover { color: #f5c518; }
+        .footer-brand { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .footer-brand span { color: #f5c518; }
+        .buscando-loader { display: none; text-align: center; padding: 40px; }
+    </style>
+</head>
+<body style="background:#f4f6f9;">
+ 
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-sigcar sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <span><i class="bi bi-car-front-fill me-2"></i>SIGCAR</span>
+            <small>RentCar Express S.A.S.</small>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon" style="filter:invert(1)"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto ms-4">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#vehiculos"><i class="bi bi-car-front me-1"></i>Vehículos</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#categorias"><i class="bi bi-grid me-1"></i>Categorías</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#nosotros"><i class="bi bi-info-circle me-1"></i>Nosotros</a>
+                </li>
+            </ul>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-secondary me-2" style="font-size:0.85rem;">
+                    <i class="bi bi-geo-alt-fill" style="color:#f5c518;"></i> Bucaramanga, Colombia
+                </span>
+                <a href="/login" class="btn btn-login">Iniciar Sesión</a>
+                <a href="/registro" class="btn btn-register">Registrarse</a>
+            </div>
+        </div>
+    </div>
+</nav>
+ 
+<!-- HERO -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-4 mb-lg-0">
+                <p class="text-warning fw-600 mb-2" style="font-size:0.9rem;">
+                    <i class="bi bi-star-fill me-1"></i> #1 Plataforma de alquiler en Bucaramanga
+                </p>
+                <h1 class="hero-title">Alquila vehículos de forma <span>rápida y segura</span></h1>
+                <p class="hero-subtitle">
+                    Plataforma empresarial para reservas, pagos y gestión completa de vehículos en Bucaramanga, Colombia.
+                </p>
+                <div class="d-flex gap-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check-fill text-warning fs-5"></i>
+                        <span class="text-white-50" style="font-size:0.85rem;">100% Seguro</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-fill text-warning fs-5"></i>
+                        <span class="text-white-50" style="font-size:0.85rem;">Reserva en minutos</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-headset text-warning fs-5"></i>
+                        <span class="text-white-50" style="font-size:0.85rem;">Soporte 24/7</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="search-box">
+                    <p class="fw-700 text-dark mb-3" style="font-size:1rem;">
+                        <i class="bi bi-search me-2" style="color:#f5c518;"></i>Buscar vehículos disponibles
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ciudad</label>
+                            <input type="text" class="form-control" value="Bucaramanga" placeholder="Ciudad de recogida">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="categoriaFiltro">
+                                <option value="">Todas las categorías</option>
+                                <option value="ECONOMICO">Económico</option>
+                                <option value="SUV">SUV</option>
+                                <option value="CAMIONETA">Camioneta</option>
+                                <option value="LUJO">De lujo</option>
+                                <option value="FAMILIAR">Familiar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de inicio</label>
+                            <input type="date" class="form-control" id="fechaInicio">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de fin</label>
+                            <input type="date" class="form-control" id="fechaFin">
+                        </div>
+                        <div class="col-12">
+                            <button class="btn-buscar" onclick="buscarVehiculos()">
+                                <i class="bi bi-search me-2"></i>Buscar Vehículos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+ 
+<!-- STATS -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-3 stat-item">
+                <div class="number">150+</div>
+                <div class="label">Vehículos disponibles</div>
+            </div>
+            <div class="col-3 stat-item">
+                <div class="number">5,000+</div>
+                <div class="label">Reservas realizadas</div>
+            </div>
+            <div class="col-3 stat-item">
+                <div class="number">4.9★</div>
+                <div class="label">Calificación promedio</div>
+            </div>
+            <div class="col-3 stat-item">
+                <div class="number">24/7</div>
+                <div class="label">Soporte disponible</div>
+            </div>
+        </div>
+    </div>
+</section>
+ 
+<!-- CATEGORÍAS -->
+<section class="py-5" id="categorias">
+    <div class="container">
+        <div class="text-center mb-4">
+            <h2 class="section-title">Explora por <span>Categoría</span></h2>
+            <p class="text-muted">Encuentra el vehículo perfecto para tu necesidad</p>
+        </div>
+        <div class="row g-3 justify-content-center">
+            <div class="col-6 col-md-2">
+                <div class="category-card" onclick="filtrarCategoria('ECONOMICO')">
+                    <i class="bi bi-car-front"></i><p>Económico</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="category-card" onclick="filtrarCategoria('SUV')">
+                    <i class="bi bi-truck"></i><p>SUV</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="category-card" onclick="filtrarCategoria('CAMIONETA')">
+                    <i class="bi bi-truck-flatbed"></i><p>Camioneta</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="category-card" onclick="filtrarCategoria('LUJO')">
+                    <i class="bi bi-star"></i><p>De Lujo</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-2">
+                <div class="category-card" onclick="filtrarCategoria('FAMILIAR')">
+                    <i class="bi bi-people"></i><p>Familiar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+ 
+<!-- VEHÍCULOS -->
+<section class="py-5 bg-white" id="vehiculos">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="section-title mb-1">Vehículos <span>Disponibles</span></h2>
+                <p class="text-muted mb-0" id="subtituloVehiculos">Los mejores vehículos para tu viaje</p>
+            </div>
+            <button class="btn btn-outline-warning fw-600" onclick="cargarVehiculosDisponibles()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Ver todos
+            </button>
+        </div>
+        <div class="buscando-loader" id="loaderVehiculos">
+            <div class="spinner-border text-warning mb-3"></div>
+            <p class="text-muted">Buscando vehículos disponibles...</p>
+        </div>
+        <div class="row g-4" id="vehiculos-grid"></div>
+    </div>
+</section>
+ 
+<!-- POR QUÉ ELEGIRNOS -->
+<section class="py-5 why-section" id="nosotros">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-title">¿Por qué elegir <span>SIGCAR</span>?</h2>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="why-card">
+                    <div class="why-icon"><i class="bi bi-shield-check"></i></div>
+                    <h6 class="fw-700">100% Seguro</h6>
+                    <p class="text-muted small">Todos nuestros vehículos cuentan con seguro completo y revisión técnica.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="why-card">
+                    <div class="why-icon"><i class="bi bi-lightning-charge"></i></div>
+                    <h6 class="fw-700">Reserva Rápida</h6>
+                    <p class="text-muted small">Reserva tu vehículo en menos de 3 minutos con contrato digital inmediato.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="why-card">
+                    <div class="why-icon"><i class="bi bi-credit-card"></i></div>
+                    <h6 class="fw-700">Pago Flexible</h6>
+                    <p class="text-muted small">Acepta efectivo, tarjeta débito/crédito y transferencias bancarias.</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="why-card">
+                    <div class="why-icon"><i class="bi bi-headset"></i></div>
+                    <h6 class="fw-700">Soporte 24/7</h6>
+                    <p class="text-muted small">Equipo de atención disponible todos los días para ayudarte.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+ 
+<!-- FOOTER -->
+<footer class="footer-sigcar">
+    <div class="container">
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="footer-brand mb-2"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+                <p class="small">RentCar Express S.A.S. — Plataforma líder de alquiler de vehículos en Bucaramanga, Colombia.</p>
+            </div>
+            <div class="col-md-2">
+                <h6>Plataforma</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#">Vehículos</a></li>
+                    <li><a href="#">Reservas</a></li>
+                    <li><a href="#">Precios</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6>Empresa</h6>
+                <ul class="list-unstyled">
+                    <li><a href="#">Sobre nosotros</a></li>
+                    <li><a href="#">Términos y condiciones</a></li>
+                    <li><a href="#">Política de privacidad</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6>Contacto</h6>
+                <p class="small mb-1"><i class="bi bi-geo-alt me-2"></i>Bucaramanga, Santander</p>
+                <p class="small mb-1"><i class="bi bi-envelope me-2"></i>contacto@rentcarexpress.com</p>
+                <p class="small"><i class="bi bi-telephone me-2"></i>+57 300 000 0000</p>
+            </div>
+        </div>
+        <hr style="border-color:#333;">
+        <p class="text-center small mb-0">© 2026 RentCar Express S.A.S. — Todos los derechos reservados.</p>
+    </div>
+</footer>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Fechas mínimas
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaInicio').min = hoy;
+    document.getElementById('fechaFin').min = hoy;
+    document.getElementById('fechaInicio').value = hoy;
+ 
+    // Renderizar cards desde la API
+    function renderVehiculos(vehiculos) {
+        const grid = document.getElementById('vehiculos-grid');
+        const loader = document.getElementById('loaderVehiculos');
+        loader.style.display = 'none';
+ 
+        if (vehiculos.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="bi bi-car-front fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="text-muted">No hay vehículos disponibles en esas fechas</h5>
+                    <p class="text-muted small">Intenta con otras fechas o categorías</p>
+                    <button class="btn btn-warning fw-600 mt-2" onclick="cargarVehiculosDisponibles()">
+                        Ver todos los vehículos
+                    </button>
+                </div>`;
+            return;
+        }
+ 
+        grid.innerHTML = vehiculos.map(v => `
+            <div class="col-md-4">
+                <div class="vehicle-card">
+                    <div class="vehicle-img-placeholder">
+                        ${v.fotoUrl
+                            ? `<img src="${v.fotoUrl}" style="width:100%;height:180px;object-fit:cover;"
+                                onerror="this.parentElement.innerHTML='<i class=bi.bi-car-front style=font-size:4rem;color:#ccc;></i>'">`
+                            : `<i class="bi bi-car-front" style="font-size:4rem;color:#ccc;"></i>`}
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <span class="marca-modelo">${v.marca} ${v.modelo}</span>
+                            <span class="badge badge-disponible text-white">Disponible</span>
+                        </div>
+                        <p class="categoria"><i class="bi bi-tag me-1"></i>${v.categoria}</p>
+                        <div class="vehicle-specs mb-3">
+                            <span class="me-3"><i class="bi bi-people me-1"></i>${v.capacidadPasajeros || 5} pasajeros</span>
+                            <span class="me-3"><i class="bi bi-gear me-1"></i>${v.transmision || 'Automático'}</span>
+                            <span><i class="bi bi-door-open me-1"></i>${v.numPuertas || 4} puertas</span>
+                        </div>
+                        <div class="mb-3">
+                            <div class="precio">$${(v.precioPorDia || 0).toLocaleString('es-CO')} <small>COP/día</small></div>
+                        </div>
+                        <button class="btn-reservar" onclick="irAReservar()">
+                            <i class="bi bi-calendar-check me-2"></i>Reservar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+ 
+    // Cargar vehículos disponibles
+    async function cargarVehiculosDisponibles() {
+        const loader = document.getElementById('loaderVehiculos');
+        const grid = document.getElementById('vehiculos-grid');
+        loader.style.display = 'block';
+        grid.innerHTML = '';
+        document.getElementById('subtituloVehiculos').textContent = 'Los mejores vehículos para tu viaje';
+        try {
+            const res = await fetch('/api/vehiculos/disponibles');
+            if (res.ok) renderVehiculos(await res.json());
+        } catch (e) { loader.style.display = 'none'; }
+    }
+ 
+    // Buscar por fechas
+    async function buscarVehiculos() {
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
+        if (!fechaInicio || !fechaFin) { alert('Por favor selecciona las fechas de inicio y fin.'); return; }
+        if (fechaFin < fechaInicio) { alert('La fecha de fin no puede ser anterior a la fecha de inicio.'); return; }
+        const loader = document.getElementById('loaderVehiculos');
+        const grid = document.getElementById('vehiculos-grid');
+        loader.style.display = 'block';
+        grid.innerHTML = '';
+        document.getElementById('subtituloVehiculos').textContent = `Disponibles del ${fechaInicio} al ${fechaFin}`;
+        document.getElementById('vehiculos').scrollIntoView({ behavior: 'smooth' });
+        try {
+            const res = await fetch(`/api/vehiculos/disponibilidad?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+            if (res.ok) {
+                renderVehiculos(await res.json());
+            } else {
+                const error = await res.text();
+                loader.style.display = 'none';
+                grid.innerHTML = `<div class="col-12 text-center py-4">
+                    <p class="text-danger"><i class="bi bi-exclamation-circle me-2"></i>${error}</p></div>`;
+            }
+        } catch (e) { loader.style.display = 'none'; }
+    }
+ 
+    // Filtrar por categoría
+    async function filtrarCategoria(categoria) {
+        const loader = document.getElementById('loaderVehiculos');
+        const grid = document.getElementById('vehiculos-grid');
+        loader.style.display = 'block';
+        grid.innerHTML = '';
+        document.getElementById('subtituloVehiculos').textContent = `Categoría: ${categoria}`;
+        document.getElementById('vehiculos').scrollIntoView({ behavior: 'smooth' });
+        try {
+            const res = await fetch(`/api/vehiculos/categoria/${categoria}`);
+            if (res.ok) renderVehiculos(await res.json());
+        } catch (e) { loader.style.display = 'none'; }
+    }
+ 
+    // Botón reservar — siempre manda al login
+    // El cliente se loguea, llega a su dashboard y desde ahí hace la reserva
+    function irAReservar() {
+        window.location.href = '/login';
+    }
+ 
+    // Cargar vehículos reales al iniciar
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarVehiculosDisponibles();
+    });
+</script>
+</body>
+</html>

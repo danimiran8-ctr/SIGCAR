@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Mecánico — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar { width: 260px; min-height: 100vh; background: #1a1a2e; position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; min-height: 100vh; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 38px; height: 38px; background: #ff9800; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 0.95rem; }
+        .kpi-card { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+        .kpi-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 14px; }
+        .kpi-number { font-size: 1.9rem; font-weight: 800; color: #1a1a2e; }
+        .kpi-label { color: #888; font-size: 0.85rem; margin-top: 2px; }
+        .card-table { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; }
+        .table td { font-size: 0.9rem; vertical-align: middle; }
+        .action-card { background: #fff; border-radius: 16px; padding: 28px 24px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); text-align: center; transition: all 0.25s; }
+        .action-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small>Panel Mecánico</small>
+    </div>
+    <div style="padding: 16px 0;">
+        <div class="menu-label">Principal</div>
+        <a href="/dashboard/mecanico" class="menu-item active">
+            <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+        <div class="menu-label">Gestión</div>
+        <a href="/mantenimientos/lista" class="menu-item">
+            <i class="bi bi-tools"></i> Mantenimientos
+        </a>
+        <div class="menu-label">Cuenta</div>
+        <a href="/logout" class="menu-item">
+            <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+        </a>
+    </div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-tools me-2" style="color:#ff9800;"></i>Dashboard Mecánico
+        </div>
+        <div class="user-info">
+            <div>
+                <div style="font-size:0.88rem;font-weight:600;color:#1a1a2e;" id="nombreTopbar">Mecánico</div>
+                <div style="font-size:0.75rem;color:#888;">RentCar Express</div>
+            </div>
+            <div class="user-avatar">MC</div>
+        </div>
+    </div>
+ 
+    <div class="p-4">
+ 
+        <!-- KPIs -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;">
+                        <i class="bi bi-exclamation-triangle" style="color:#ff9800;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiAlertas">
+                        <div class="spinner-border spinner-border-sm text-warning"></div>
+                    </div>
+                    <div class="kpi-label">Vehículos con alertas</div>
+                    <div id="kpiAlertasDetalle" style="font-size:0.78rem;color:#ff9800;margin-top:6px;"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#fff3e0;">
+                        <i class="bi bi-car-front" style="color:#e65100;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiEnMantenimiento">
+                        <div class="spinner-border spinner-border-sm text-warning"></div>
+                    </div>
+                    <div class="kpi-label">En mantenimiento ahora</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background:#e8f5e9;">
+                        <i class="bi bi-check-circle" style="color:#4caf50;"></i>
+                    </div>
+                    <div class="kpi-number" id="kpiMantenimientosHoy">
+                        <div class="spinner-border spinner-border-sm text-success"></div>
+                    </div>
+                    <div class="kpi-label">Mantenimientos registrados</div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- Acciones rápidas -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="action-card">
+                    <i class="bi bi-plus-circle fs-1 mb-3 d-block" style="color:#ff9800;"></i>
+                    <h6 class="fw-700 mb-2">Registrar Mantenimiento</h6>
+                    <p class="text-muted small mb-3">Registra un nuevo mantenimiento preventivo o correctivo para un vehículo.</p>
+                    <a href="/mantenimientos/lista" class="btn fw-700 px-4" style="background:#ff9800;color:#fff;border:none;">
+                        <i class="bi bi-plus-lg me-2"></i>Ir a Mantenimientos
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="action-card">
+                    <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block" style="color:#f5c518;"></i>
+                    <h6 class="fw-700 mb-2">Ver Alertas</h6>
+                    <p class="text-muted small mb-3">Consulta los vehículos que requieren mantenimiento por kilometraje o fecha.</p>
+                    <a href="/mantenimientos/lista" class="btn btn-outline-warning fw-700 px-4">
+                        <i class="bi bi-eye me-2"></i>Ver alertas
+                    </a>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- Alertas de vehículos -->
+        <div class="card-table">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-700 mb-0" style="color:#1a1a2e;">
+                    <i class="bi bi-exclamation-triangle me-2" style="color:#ff9800;"></i>Vehículos que requieren atención
+                </h6>
+                <a href="/mantenimientos/lista" class="btn btn-sm fw-600" style="background:#ff9800;color:#fff;border:none;">
+                    Ver todos <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Vehículo</th>
+                            <th>Km actual</th>
+                            <th>Km límite</th>
+                            <th>Fecha límite</th>
+                            <th>Alerta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAlertas">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                Cargando alertas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.rol !== 'MECANICO') {
+            window.location.href = '/dashboard/' + payload.rol.toLowerCase();
+        }
+        document.getElementById('nombreTopbar').textContent = payload.sub || 'Mecánico';
+    } catch (e) {
+        window.location.href = '/login';
+    }
+ 
+    async function cargarDatos() {
+        try {
+            // Alertas de mantenimiento
+            const resA = await fetch('/api/vehiculos/alertas', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (resA.ok) {
+                const alertas = await resA.json();
+                document.getElementById('kpiAlertas').textContent = alertas.length;
+                document.getElementById('kpiAlertasDetalle').innerHTML =
+                    alertas.length > 0
+                        ? `<i class="bi bi-exclamation-circle me-1"></i>${alertas.length} requieren atención`
+                        : `<i class="bi bi-check-circle me-1" style="color:#4caf50;"></i>Todo al día`;
+ 
+                const tbody = document.getElementById('tablaAlertas');
+                if (alertas.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        No hay vehículos con alertas pendientes</td></tr>`;
+                } else {
+                    tbody.innerHTML = alertas.map(v => `
+                        <tr>
+                            <td><strong style="font-family:monospace;">${v.placa}</strong></td>
+                            <td>${v.marca} ${v.modelo}
+                                <small class="d-block text-muted">${v.categoria}</small>
+                            </td>
+                            <td>${v.kilometrajeActual || 0} km</td>
+                            <td>${v.kilometrajeMantenimiento || '—'} km</td>
+                            <td>${v.fechaMantenimiento || '—'}</td>
+                            <td><span style="background:#fff3e0;color:#e65100;
+                                padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;">
+                                ⚠ Requiere atención</span></td>
+                        </tr>`).join('');
+                }
+            }
+ 
+            // Vehículos en mantenimiento
+            const resV = await fetch('/api/vehiculos/estado/EN_MANTENIMIENTO', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (resV.ok) {
+                const enMant = await resV.json();
+                document.getElementById('kpiEnMantenimiento').textContent = enMant.length;
+            }
+ 
+            // Total mantenimientos registrados
+            const resM = await fetch('/api/mantenimientos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (resM.ok) {
+                const mantenimientos = await resM.json();
+                document.getElementById('kpiMantenimientosHoy').textContent = mantenimientos.length;
+            }
+ 
+        } catch (e) { console.error(e); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', cargarDatos);
+</script>
+</body>
+</html>

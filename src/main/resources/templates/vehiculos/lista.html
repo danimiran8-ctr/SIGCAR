@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Vehículos — SIGCAR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f4f6f9; margin: 0; }
+        .sidebar { width: 260px; min-height: 100vh; background: #1a1a2e; position: fixed; top: 0; left: 0; z-index: 100; }
+        .sidebar-brand { padding: 22px 20px; border-bottom: 1px solid #2a2a4e; }
+        .sidebar-brand .logo { font-size: 1.3rem; font-weight: 800; color: #fff; }
+        .sidebar-brand .logo span { color: #f5c518; }
+        .sidebar-brand small { color: #888; font-size: 0.72rem; }
+        .menu-label { padding: 8px 20px; font-size: 0.7rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; color: #aaa; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover, .menu-item.active { background: rgba(245,197,24,0.08); color: #f5c518; border-left-color: #f5c518; }
+        .menu-item i { font-size: 1.1rem; width: 20px; }
+        .main-content { margin-left: 260px; }
+        .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+        .topbar-title { font-weight: 700; color: #1a1a2e; font-size: 1.1rem; }
+        .card-table { background: #fff; border-radius: 16px; padding: 24px; border: 1px solid #f0f0f0; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+        .table th { font-size: 0.78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #f0f0f0; padding: 12px 16px; }
+        .table td { font-size: 0.9rem; vertical-align: middle; padding: 12px 16px; }
+        .table tbody tr:hover { background: #fafafa; }
+        .btn-nuevo { background: #f5c518; color: #1a1a2e; font-weight: 700; border: none; border-radius: 10px; padding: 10px 20px; transition: all 0.2s; cursor: pointer; }
+        .btn-nuevo:hover { background: #e0b015; }
+        .search-input { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 9px 16px; font-size: 0.9rem; width: 240px; }
+        .search-input:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); outline: none; }
+        .form-select-sm { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 9px 14px; font-size: 0.88rem; }
+        .form-select-sm:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); outline: none; }
+        .estado-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .foto-placeholder { width: 55px; height: 40px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .foto-placeholder i { color: #ccc; font-size: 1.2rem; }
+        .foto-vehiculo { width: 55px; height: 40px; object-fit: cover; border-radius: 8px; }
+        .modal-header { background: #1a1a2e; color: #fff; border-radius: 12px 12px 0 0; }
+        .modal-header .btn-close { filter: invert(1); }
+        .form-label { font-weight: 600; font-size: 0.88rem; color: #444; }
+        .form-control, .form-select { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { border-color: #f5c518; box-shadow: 0 0 0 3px rgba(245,197,24,0.15); }
+        .alerta-km { background: #fff3e0; border: 1px solid #ff9800; border-radius: 8px; padding: 8px 12px; font-size: 0.8rem; color: #e65100; }
+    </style>
+</head>
+<body>
+ 
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="logo"><i class="bi bi-car-front-fill me-2"></i><span>SIGCAR</span></div>
+        <small id="labelRol">Panel</small>
+    </div>
+    <div style="padding: 16px 0;" id="sidebarMenu"></div>
+</div>
+ 
+<!-- MAIN -->
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-car-front me-2" style="color:#f5c518;"></i>Gestión de Vehículos
+        </div>
+        <div style="font-size:0.85rem;color:#888;">Administrador y Agente</div>
+    </div>
+ 
+    <div class="p-4">
+ 
+        <!-- Alerta de mantenimiento -->
+        <div id="alertaMantenimiento" style="display:none;" class="alerta-km mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span id="textoAlerta"></span>
+        </div>
+ 
+        <div class="card-table">
+            <!-- Barra de acciones -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex gap-2 align-items-center flex-wrap">
+                    <input type="text" class="search-input" id="busqueda"
+                           placeholder="🔍 Buscar vehículo..." onkeyup="filtrar()">
+                    <select class="form-select-sm" id="filtroEstado" onchange="filtrar()">
+                        <option value="">Todos los estados</option>
+                        <option value="DISPONIBLE">Disponible</option>
+                        <option value="ALQUILADO">Alquilado</option>
+                        <option value="EN_MANTENIMIENTO">En mantenimiento</option>
+                    </select>
+                    <select class="form-select-sm" id="filtroCategoria" onchange="filtrar()">
+                        <option value="">Todas las categorías</option>
+                        <option value="ECONOMICO">Económico</option>
+                        <option value="SUV">SUV</option>
+                        <option value="CAMIONETA">Camioneta</option>
+                        <option value="LUJO">De lujo</option>
+                        <option value="FAMILIAR">Familiar</option>
+                    </select>
+                </div>
+                <button class="btn-nuevo" id="btnNuevoVehiculo" onclick="abrirModalNuevo()">
+                    <i class="bi bi-plus-lg me-2"></i>Nuevo Vehículo
+                </button>
+            </div>
+ 
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Foto</th>
+                            <th>Placa</th>
+                            <th>Vehículo</th>
+                            <th>Categoría</th>
+                            <th>Precio/día</th>
+                            <th>Km actual</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="spinner-border spinner-border-sm text-warning me-2"></div>
+                                Cargando vehículos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <small class="text-muted" id="totalRegistros"></small>
+        </div>
+    </div>
+</div>
+ 
+<!-- MODAL CREAR / EDITAR -->
+<div class="modal fade" id="modalVehiculo" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;border:none;">
+            <div class="modal-header">
+                <h6 class="modal-title fw-700" id="modalTitulo">Nuevo Vehículo</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="vehiculoId">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Placa <span class="text-danger">*</span></label>
+                        <input type="text" id="placa" class="form-control"
+                               placeholder="Ej: ABC123" style="text-transform:uppercase;" required>
+                        <small class="text-muted">La placa debe ser única en el sistema</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Marca <span class="text-danger">*</span></label>
+                        <input type="text" id="marca" class="form-control" placeholder="Ej: Toyota">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Modelo <span class="text-danger">*</span></label>
+                        <input type="text" id="modelo" class="form-control" placeholder="Ej: Corolla">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Año</label>
+                        <input type="number" id="anio" class="form-control" placeholder="2024" min="1990" max="2030">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Color</label>
+                        <input type="text" id="color" class="form-control" placeholder="Blanco">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">N° Puertas</label>
+                        <input type="number" id="numPuertas" class="form-control" value="4" min="2" max="6">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Pasajeros</label>
+                        <input type="number" id="capacidadPasajeros" class="form-control" value="5" min="1" max="15">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Categoría</label>
+                        <select id="categoria" class="form-select">
+                            <option value="ECONOMICO">Económico</option>
+                            <option value="SUV">SUV</option>
+                            <option value="CAMIONETA">Camioneta</option>
+                            <option value="LUJO">De lujo</option>
+                            <option value="FAMILIAR">Familiar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Transmisión</label>
+                        <select id="transmision" class="form-select">
+                            <option value="AUTOMATICO">Automático</option>
+                            <option value="MANUAL">Manual</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Precio por día (COP)</label>
+                        <input type="number" id="precioPorDia" class="form-control" placeholder="150000" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Kilometraje actual</label>
+                        <input type="number" id="kilometrajeActual" class="form-control" placeholder="0" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Km límite mantenimiento</label>
+                        <input type="number" id="kilometrajeMantenimiento" class="form-control" placeholder="Ej: 50000">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha próximo mantenimiento</label>
+                        <input type="date" id="fechaMantenimiento" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">URL de foto</label>
+                        <input type="text" id="fotoUrl" class="form-control"
+                               placeholder="https://ejemplo.com/foto.jpg">
+                    </div>
+                </div>
+                <div id="mensajeModal" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-light fw-600 border"
+                        data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn-nuevo px-4" onclick="guardarVehiculo()">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let todosLosVehiculos = [];
+    let modalVehiculo;
+ 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+ 
+    const token = getCookie('jwt_token');
+    if (!token) window.location.href = '/login';
+ 
+    // ── SIDEBAR DINÁMICO ────────────────────────────────
+    function construirSidebar() {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const rol = payload.rol || '';
+ 
+            document.getElementById('labelRol').textContent =
+                rol === 'ADMINISTRADOR' ? 'Panel Administrador' : 'Panel Agente';
+ 
+            const dashboardUrl = rol === 'ADMINISTRADOR'
+                ? '/dashboard/admin' : '/dashboard/agente';
+ 
+            let menu = `
+                <div class="menu-label">Principal</div>
+                <a href="${dashboardUrl}" class="menu-item">
+                    <i class="bi bi-grid-1x2"></i> Dashboard
+                </a>
+                <div class="menu-label">Gestión</div>`;
+ 
+            if (rol === 'ADMINISTRADOR') {
+                menu += `
+                <a href="/usuarios/lista" class="menu-item">
+                    <i class="bi bi-people"></i> Usuarios
+                </a>`;
+            }
+ 
+            menu += `
+                <a href="/vehiculos/lista" class="menu-item active">
+                    <i class="bi bi-car-front"></i> Vehículos
+                </a>
+                <a href="/reservas/lista" class="menu-item">
+                    <i class="bi bi-calendar-check"></i> Reservas
+                </a>
+                <a href="/pagos/lista" class="menu-item">
+                    <i class="bi bi-credit-card"></i> Pagos
+                </a>`;
+ 
+            if (rol === 'ADMINISTRADOR') {
+                menu += `
+                <a href="/mantenimientos/lista" class="menu-item">
+                    <i class="bi bi-tools"></i> Mantenimientos
+                </a>
+                <div class="menu-label">Reportes</div>
+                <a href="/reportes/lista" class="menu-item">
+                    <i class="bi bi-bar-chart"></i> Reportes
+                </a>`;
+            }
+ 
+            menu += `
+                <div class="menu-label">Cuenta</div>
+                <a href="/logout" class="menu-item">
+                    <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+                </a>`;
+ 
+            document.getElementById('sidebarMenu').innerHTML = menu;
+ 
+            // Si es agente ocultar botón nuevo vehículo
+            if (rol === 'AGENTE') {
+                document.getElementById('btnNuevoVehiculo').style.display = 'none';
+            }
+ 
+        } catch (e) {
+            window.location.href = '/login';
+        }
+    }
+ 
+    const coloresEstado = {
+        'DISPONIBLE':       { bg: '#e8f5e9', color: '#2e7d32' },
+        'ALQUILADO':        { bg: '#ffebee', color: '#c62828' },
+        'EN_MANTENIMIENTO': { bg: '#fff3e0', color: '#e65100' },
+    };
+ 
+    const coloresCat = {
+        'ECONOMICO': { bg: '#e3f2fd', color: '#1565c0' },
+        'SUV':       { bg: '#f3e5f5', color: '#6a1b9a' },
+        'CAMIONETA': { bg: '#fff8e1', color: '#f57f17' },
+        'LUJO':      { bg: '#fce4ec', color: '#880e4f' },
+        'FAMILIAR':  { bg: '#e8f5e9', color: '#1b5e20' },
+    };
+ 
+    async function cargarVehiculos() {
+        try {
+            const res = await fetch('/api/vehiculos', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) { window.location.href = '/login'; return; }
+            todosLosVehiculos = await res.json();
+            renderTabla(todosLosVehiculos);
+            verificarAlertas();
+        } catch (e) {
+            document.getElementById('cuerpoTabla').innerHTML =
+                `<tr><td colspan="8" class="text-center text-danger py-4">
+                Error al cargar vehículos</td></tr>`;
+        }
+    }
+ 
+    async function verificarAlertas() {
+        try {
+            const res = await fetch('/api/vehiculos/alertas', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const alertas = await res.json();
+            if (alertas.length > 0) {
+                document.getElementById('alertaMantenimiento').style.display = 'block';
+                document.getElementById('textoAlerta').textContent =
+                    `⚠️ ${alertas.length} vehículo(s) requieren mantenimiento próximamente: `
+                    + alertas.map(v => v.placa).join(', ');
+            }
+        } catch (e) { console.error(e); }
+    }
+ 
+    function renderTabla(vehiculos) {
+        const tbody = document.getElementById('cuerpoTabla');
+        document.getElementById('totalRegistros').textContent =
+            `Total: ${vehiculos.length} vehículo(s)`;
+ 
+        if (vehiculos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-5">
+                <i class="bi bi-car-front fs-2 d-block mb-2"></i>
+                No hay vehículos registrados</td></tr>`;
+            return;
+        }
+ 
+        tbody.innerHTML = vehiculos.map(v => {
+            const est = coloresEstado[v.estado] || { bg: '#f0f0f0', color: '#666' };
+            const cat = coloresCat[v.categoria] || { bg: '#f0f0f0', color: '#666' };
+            const foto = v.fotoUrl
+                ? `<img src="${v.fotoUrl}" class="foto-vehiculo"
+                       onerror="this.parentElement.innerHTML='<div class=foto-placeholder><i class=bi.bi-car-front></i></div>'">`
+                : `<div class="foto-placeholder"><i class="bi bi-car-front"></i></div>`;
+ 
+            return `
+            <tr>
+                <td>${foto}</td>
+                <td><strong style="font-family:monospace;">${v.placa}</strong></td>
+                <td>
+                    <div class="fw-600">${v.marca} ${v.modelo}</div>
+                    <small class="text-muted">${v.anio || ''} · ${v.color || ''} · ${v.transmision || ''}</small>
+                </td>
+                <td><span class="estado-badge"
+                    style="background:${cat.bg};color:${cat.color};">${v.categoria}</span></td>
+                <td><strong>$${(v.precioPorDia || 0).toLocaleString('es-CO')}</strong>
+                    <small class="text-muted d-block">COP/día</small></td>
+                <td>${(v.kilometrajeActual || 0).toLocaleString('es-CO')} km</td>
+                <td><span class="estado-badge"
+                    style="background:${est.bg};color:${est.color};">${v.estado}</span></td>
+                <td>
+                    <div class="d-flex gap-1 flex-wrap">
+                        <button class="btn btn-sm btn-outline-warning" title="Editar"
+                            onclick="abrirModalEditar('${v.id}')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" title="Cambiar estado"
+                            onclick="cambiarEstadoPrompt('${v.id}','${v.estado}')">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                        ${v.activo
+                            ? `<button class="btn btn-sm btn-outline-danger" title="Desactivar"
+                                onclick="cambiarActivo('${v.id}','desactivar')">
+                                <i class="bi bi-toggle-on"></i></button>`
+                            : `<button class="btn btn-sm btn-outline-success" title="Activar"
+                                onclick="cambiarActivo('${v.id}','activar')">
+                                <i class="bi bi-toggle-off"></i></button>`}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+ 
+    function filtrar() {
+        const texto = document.getElementById('busqueda').value.toLowerCase();
+        const estado = document.getElementById('filtroEstado').value;
+        const categoria = document.getElementById('filtroCategoria').value;
+ 
+        const filtrados = todosLosVehiculos.filter(v => {
+            const coincideTexto = (v.placa + ' ' + v.marca + ' ' + v.modelo)
+                .toLowerCase().includes(texto);
+            const coincideEstado = estado === '' || v.estado === estado;
+            const coincideCategoria = categoria === '' || v.categoria === categoria;
+            return coincideTexto && coincideEstado && coincideCategoria;
+        });
+        renderTabla(filtrados);
+    }
+ 
+    function limpiarModal() {
+        ['vehiculoId','placa','marca','modelo','color','fotoUrl'].forEach(id =>
+            document.getElementById(id).value = '');
+        document.getElementById('anio').value = new Date().getFullYear();
+        document.getElementById('numPuertas').value = 4;
+        document.getElementById('capacidadPasajeros').value = 5;
+        document.getElementById('precioPorDia').value = '';
+        document.getElementById('kilometrajeActual').value = 0;
+        document.getElementById('kilometrajeMantenimiento').value = '';
+        document.getElementById('fechaMantenimiento').value = '';
+        document.getElementById('categoria').value = 'ECONOMICO';
+        document.getElementById('transmision').value = 'AUTOMATICO';
+        document.getElementById('placa').disabled = false;
+        document.getElementById('mensajeModal').style.display = 'none';
+    }
+ 
+    function abrirModalNuevo() {
+        document.getElementById('modalTitulo').textContent = 'Nuevo Vehículo';
+        limpiarModal();
+        modalVehiculo.show();
+    }
+ 
+    async function abrirModalEditar(id) {
+        try {
+            const res = await fetch(`/api/vehiculos/${id}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const v = await res.json();
+            document.getElementById('modalTitulo').textContent = 'Editar Vehículo';
+            document.getElementById('vehiculoId').value = v.id;
+            document.getElementById('placa').value = v.placa;
+            document.getElementById('placa').disabled = true;
+            document.getElementById('marca').value = v.marca || '';
+            document.getElementById('modelo').value = v.modelo || '';
+            document.getElementById('anio').value = v.anio || '';
+            document.getElementById('color').value = v.color || '';
+            document.getElementById('numPuertas').value = v.numPuertas || 4;
+            document.getElementById('capacidadPasajeros').value = v.capacidadPasajeros || 5;
+            document.getElementById('categoria').value = v.categoria || 'ECONOMICO';
+            document.getElementById('transmision').value = v.transmision || 'AUTOMATICO';
+            document.getElementById('precioPorDia').value = v.precioPorDia || '';
+            document.getElementById('kilometrajeActual').value = v.kilometrajeActual || 0;
+            document.getElementById('kilometrajeMantenimiento').value = v.kilometrajeMantenimiento || '';
+            document.getElementById('fechaMantenimiento').value = v.fechaMantenimiento || '';
+            document.getElementById('fotoUrl').value = v.fotoUrl || '';
+            document.getElementById('mensajeModal').style.display = 'none';
+            modalVehiculo.show();
+        } catch (e) { alert('Error al cargar vehículo'); }
+    }
+ 
+    async function guardarVehiculo() {
+        const id = document.getElementById('vehiculoId').value;
+        const datos = {
+            placa:                    document.getElementById('placa').value.toUpperCase().trim(),
+            marca:                    document.getElementById('marca').value,
+            modelo:                   document.getElementById('modelo').value,
+            anio:                     parseInt(document.getElementById('anio').value),
+            color:                    document.getElementById('color').value,
+            numPuertas:               parseInt(document.getElementById('numPuertas').value),
+            capacidadPasajeros:       parseInt(document.getElementById('capacidadPasajeros').value),
+            categoria:                document.getElementById('categoria').value,
+            transmision:              document.getElementById('transmision').value,
+            precioPorDia:             parseFloat(document.getElementById('precioPorDia').value),
+            kilometrajeActual:        parseInt(document.getElementById('kilometrajeActual').value) || 0,
+            kilometrajeMantenimiento: parseInt(document.getElementById('kilometrajeMantenimiento').value) || null,
+            fechaMantenimiento:       document.getElementById('fechaMantenimiento').value || null,
+            fotoUrl:                  document.getElementById('fotoUrl').value,
+        };
+ 
+        const msg = document.getElementById('mensajeModal');
+        msg.style.display = 'block';
+ 
+        try {
+            const url = id ? `/api/vehiculos/${id}` : '/api/vehiculos';
+            const method = id ? 'PUT' : 'POST';
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify(datos)
+            });
+ 
+            if (res.ok) {
+                msg.className = 'alert alert-success rounded-3';
+                msg.innerHTML = '✅ Vehículo guardado correctamente';
+                setTimeout(() => { modalVehiculo.hide(); cargarVehiculos(); }, 1500);
+            } else {
+                const error = await res.text();
+                msg.className = 'alert alert-danger rounded-3';
+                msg.innerHTML = '❌ ' + error;
+            }
+        } catch (e) {
+            msg.className = 'alert alert-danger rounded-3';
+            msg.innerHTML = '❌ Error de conexión';
+        }
+    }
+ 
+    async function cambiarEstadoPrompt(id, estadoActual) {
+        const estados = ['DISPONIBLE', 'ALQUILADO', 'EN_MANTENIMIENTO'];
+        const nuevo = prompt(
+            `Estado actual: ${estadoActual}\nIngresa el nuevo estado:\n${estados.join(' / ')}`
+        );
+        if (!nuevo || !estados.includes(nuevo.toUpperCase())) {
+            alert('Estado inválido'); return;
+        }
+        try {
+            const res = await fetch(`/api/vehiculos/${id}/estado/${nuevo.toUpperCase()}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarVehiculos();
+            else alert('Error al cambiar estado');
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    async function cambiarActivo(id, accion) {
+        if (!confirm(`¿Confirmas ${accion} este vehículo?`)) return;
+        try {
+            const res = await fetch(`/api/vehiculos/${id}/${accion}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (res.ok) cargarVehiculos();
+            else {
+                const err = await res.text();
+                alert('Error: ' + err);
+            }
+        } catch (e) { alert('Error de conexión'); }
+    }
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+        modalVehiculo = new bootstrap.Modal(document.getElementById('modalVehiculo'));
+        construirSidebar();
+        cargarVehiculos();
+    });
+</script>
+</body>
+</html>
